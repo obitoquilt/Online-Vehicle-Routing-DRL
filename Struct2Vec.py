@@ -19,6 +19,7 @@ for node in node_list:
     node.serial_number = ser_num_list.index(node.serial_number)
     for edge in node.edges:
         edge.to = ser_num_list.index(edge.to)
+
 for node in node_list:
     print(node.type.name)
 

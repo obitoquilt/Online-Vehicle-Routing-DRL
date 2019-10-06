@@ -26,7 +26,7 @@ def single_car_tour_graph(graph):
     # utilize floyd_warshall algorithm to obtain the shortest distance between any two points
     for k, i, j in product(range(node_num), repeat=3):
         sum_ik_kj = dist[i][k] + dist[k][j]
-        if sum_ik_kj > dist[i][j]:
+        if sum_ik_kj < dist[i][j]:
             dist[i][j] = sum_ik_kj
 
     # re-create the graph for single car

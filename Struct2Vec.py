@@ -8,8 +8,9 @@ from TourGraphCreation import single_car_tour_graph
 R = 4  # mu的迭代次数
 # node_list=[]#小图的节点列表
 
-graph, request = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
-graph = single_car_tour_graph(graph)
+graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
+reqs = [r[0] for r in requests]
+graph = single_car_tour_graph(graph, reqs)
 
 ser_num_list = []
 node_list = graph  # 小图的节点列表
@@ -119,3 +120,4 @@ for _ in range(R):
 
 print(x_all)
 print(mu_all)
+print(list(struct2vec.named_parameters()))

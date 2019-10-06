@@ -73,7 +73,6 @@ for _ in range(R):
         ti = []
         for edge in node.edges:
             mu_N.append(mu_all[edge.to].unsqueeze(0))
-            print(edge.length)
             wi.append(edge.length)
             ui.append(edge.energy)
             ti.append(edge.time)
@@ -116,6 +115,6 @@ for _ in range(R):
             xi = torch.Tensor([0])
             mu_all[node.serial_number] = struct2vec(node.type.name, xi, mu_N, wi, ui, ti)
         x_all.append(xi)
-        print("---")
+
 print(x_all)
 print(mu_all)

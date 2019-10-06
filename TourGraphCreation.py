@@ -8,6 +8,7 @@ from math import inf
 from itertools import product
 from GenetateBigGraph import generate_big_graph
 from NodeAndEdge import Road
+import random
 
 
 def single_car_tour_graph(graph, requests):
@@ -50,6 +51,13 @@ def single_car_tour_graph(graph, requests):
                     length = time = energy = dist[i][j]
                     node.edges.append(Road(j, length, time, energy))
             tour_graph.append(node)
+
+    # L_k_0 point(start) is in the first place, then those of other stops are in a random order
+    random.shuffle(tour_graph)
+    for i, node in enumerate(tour_graph):
+        if node.type.name == 'Start':
+            tour_graph[0], tour_graph[i] = tour_graph[i], tour_graph[0]
+            break
 
     return tour_graph
 

@@ -10,11 +10,19 @@ R = 4  # mu的迭代次数
 
 graph, request = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
 graph = single_car_tour_graph(graph)
+
+ser_num_list = []
 node_list = graph  # 小图的节点列表
-print(node_list)
+for node in node_list:
+    ser_num_list.append(node.serial_number)
+for node in node_list:
+    node.serial_number = ser_num_list.index(node.serial_number)
+    for edge in node.edges:
+        edge.to = ser_num_list.index(edge.to)
+for node in node_list:
+    print(node.type.name)
 
 node_num = len(node_list)  # 小图的节点总数
-print(node_num)
 p_dim = 128
 
 
@@ -65,10 +73,15 @@ for _ in range(R):
         ti = []
         for edge in node.edges:
             mu_N.append(mu_all[edge.to].unsqueeze(0))
+            print(edge.length)
             wi.append(edge.length)
             ui.append(edge.energy)
             ti.append(edge.time)
-        mu_N = torch.cat(mu_N)
+        if len(mu_N) > 0:
+            mu_N = torch.cat(mu_N)
+        else:
+            mu_all[node.serial_number] = torch.zeros(p_dim)
+            continue
         wi = torch.Tensor(wi).unsqueeze(1)
         ui = torch.Tensor(ui).unsqueeze(1)
         ti = torch.Tensor(ti).unsqueeze(1)
@@ -103,5 +116,6 @@ for _ in range(R):
             xi = torch.Tensor([0])
             mu_all[node.serial_number] = struct2vec(node.type.name, xi, mu_N, wi, ui, ti)
         x_all.append(xi)
+        print("---")
 print(x_all)
 print(mu_all)

@@ -476,21 +476,26 @@ class NeuralCombOptRL(nn.Module):
         return R, v, probs, actions, action_idxs
 
 
-def find_distance(p, d, graph):
-
+def find_something(p, d, graph, something=None):
     for node in graph:
         if node.serial_number == p:
             for e in node.edges:
                 if e.to == d:
-                    return e.length
+                    if something == 'length':
+                        return e.length
+                    elif something == 'time':
+                        return e.time
+                    elif something == 'energy':
+                        return e.energy
 
 
-def reward_fn(tour, graph, mapping_table, reqs):
+def reward_fn(tour, graph, mapping_table, requests):
     """
     :param tour: a solution of vehicle k
     :param graph: tour graph creation for vehicle k (i.e. small graph)
     :param mapping_table: mapping table
-    :param reqs: a list of tuple(i, j)
+    :param requests: requests: a list of (tuple(p, d), deadline, required_capacity) and
+    p, d denote pickup and delivery location respectively
     :return:
     """
     dest_id = None
@@ -500,20 +505,30 @@ def reward_fn(tour, graph, mapping_table, reqs):
             dest_id = node.serial_number
 
     # clip the tour
-    for i, t in enumerate(tour):
+    for k, t in enumerate(tour):
         if t == dest_id:
             break
-    tour = tour[:i]
+    tour = tour[:k]
 
     # objective reward
     sum_x_q = 0
-    for p, d in reqs:
+    complete_p_d = []  # p->d
+    for (p, d), T_q, rc in requests:
         if d in tour[tour.index(p) + 1:]:
             sum_x_q += 1
+            complete_p_d.append((d, T_q, rc))
 
     W = 0
     for i in range(len(tour) - 1):
-        W += find_distance(tour[i], tour[i + 1], graph)
+        W += find_something(tour[i], tour[i + 1], graph, 'length')
 
     # constraint penalty
+    T = 0
+    for d, T_q, rc in complete_p_d:
+        t = 0
+        for i in range(tour.index(d)):
+            t += find_something(tour[i], tour[i + 1], graph, 'time')
 
+        T += max(t - T_q, 0)
+
+    C = 0

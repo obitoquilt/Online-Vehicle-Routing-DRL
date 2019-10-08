@@ -21,7 +21,7 @@ class struct2vec_model(nn.Module):
         self.theta8_Destination_linear = nn.Linear(1, p_dim, bias=False)
 
     def forward(self, name, xi, mu_N, wi, ui, ti):
-        # xi:(xi_dim);mu_N:(|N(i)|,p_dim);wi:(|N(i)|,1);ui:(|N(i)|,1);ti:(|N(i)|,1)
+        # xi:(xi_dim); mu_N:(|N(i)|, p_dim); wi:(|N(i)|, 1); ui:(|N(i)|, 1); ti:(|N(i)|, 1)
         tmp = self.theta1_linear(torch.sum(mu_N, 0)) + self.theta2_linear(
             torch.sum(torch.relu(self.theta3_linear(wi)), 0)) \
               + self.theta4_linear(torch.sum(torch.relu(self.theta5_linear(ui)), 0)) \

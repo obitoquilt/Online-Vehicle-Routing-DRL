@@ -117,7 +117,7 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
         # print(list(struct2vec.named_parameters()))
 
-        return x_all, mu_all
+        return x_all, mu_all, ser_num_list
 
 
 if __name__ == '__main__':
@@ -125,6 +125,6 @@ if __name__ == '__main__':
     torch.set_printoptions(threshold=np.nan)    # show all data
     graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
     graph = single_car_tour_graph(graph, requests)
-    x_all, mu_all = Struct2Vec(graph)
+    x_all, mu_all, ser_num_list = Struct2Vec(graph)
     print(x_all)
     print(mu_all)

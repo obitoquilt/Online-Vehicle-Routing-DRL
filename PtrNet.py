@@ -408,14 +408,12 @@ class NeuralCombOptRL(nn.Module):
                  beam_size,
                  objective_fn,  # reward function
                  is_train,
-                 use_cuda,
-                 is_ema):
+                 use_cuda):
         super(NeuralCombOptRL, self).__init__()
         self.objective_fn = objective_fn
         self.input_dim = input_dim
         self.is_train = is_train
         self.use_cuda = use_cuda
-        self.is_ema = is_ema
 
         self.actor_net = PointerNetwork(
             embedding_dim,
@@ -428,14 +426,13 @@ class NeuralCombOptRL(nn.Module):
             use_cuda)
 
         # utilize critic network
-        if not self.is_ema:
-            self.critic_net = CriticNetwork(
-                embedding_dim,
-                hidden_dim,
-                n_process_blocks,
-                tanh_exploration,
-                False,
-                use_cuda)
+        self.critic_net = CriticNetwork(
+            embedding_dim,
+            hidden_dim,
+            n_process_blocks,
+            tanh_exploration,
+            False,  # use_tanh
+            use_cuda)
 
         self.embedding = nn.Linear(input_dim, embedding_dim)
 
@@ -456,7 +453,6 @@ class NeuralCombOptRL(nn.Module):
 
         # Select the actions (inputs pointed to by the pointer net)
         actions = []
-        v = None
 
         for action_id in action_idxs:
             actions.append(inputs[list(range(batch_size)), action_id, :])
@@ -473,13 +469,9 @@ class NeuralCombOptRL(nn.Module):
 
         # get the critic value fn estimates for the baseline
         # [batch_size]
-        if not self.is_ema:
-            v = self.critic_net(embedded_inputs)
+        v = self.critic_net(embedded_inputs)
 
         # [batch_size]
         R = self.objective_fn(actions, self.use_cuda)
 
-        if not self.is_ema:
-            return R, v, probs, actions, action_idxs
-        else:
-            return R, probs, actions, action_idxs
+        return R, v, probs, actions, action_idxs

@@ -2,7 +2,11 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
+<<<<<<< HEAD
     <orderEntry type="jdk" jdkName="Python 3.5 (rl)" jdkType="Python SDK" />
+=======
+    <orderEntry type="jdk" jdkName="Remote Python 3.6.9 (sftp://yongxin@172.18.233.175:22/home/yongxin/.virtualenvs/yongxin/bin/python) (6)" jdkType="Python SDK" />
+>>>>>>> cc374be1847c6365ceddc4cfd3f3e217e907655f
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

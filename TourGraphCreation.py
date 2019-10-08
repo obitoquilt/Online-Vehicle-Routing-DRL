@@ -6,7 +6,6 @@
 
 from math import inf
 from itertools import product
-from GenetateBigGraph import generate_big_graph
 from NodeAndEdge import Road
 import random
 
@@ -64,5 +63,6 @@ def single_car_tour_graph(graph, requests):
 
 
 if __name__ == '__main__':
+    from GenetateBigGraph import generate_big_graph
     graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
     single_car_tour_graph(graph, requests)

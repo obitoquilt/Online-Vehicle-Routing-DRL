@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from GenetateBigGraph import generate_big_graph
-from TourGraphCreation import single_car_tour_graph
 
 
 class struct2vec_model(nn.Module):
@@ -61,7 +59,7 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
     mu_all = torch.zeros(node_num, p_dim)
     struct2vec = struct2vec_model(p_dim)
-    x_all = []   # 存所有xi
+    x_all = []  # 存所有xi
     for _ in range(R):
         for node in node_list:
             mu_N = []
@@ -122,7 +120,10 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
 if __name__ == '__main__':
     import numpy as np
-    torch.set_printoptions(threshold=np.nan)    # show all data
+    from GenetateBigGraph import generate_big_graph
+    from TourGraphCreation import single_car_tour_graph
+
+    torch.set_printoptions(threshold=np.nan)  # show all data
     graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
     graph = single_car_tour_graph(graph, requests)
     x_all, mu_all, ser_num_list = Struct2Vec(graph)

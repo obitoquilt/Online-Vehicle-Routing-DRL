@@ -14,9 +14,10 @@ import random
 def single_car_tour_graph(graph, requests):
     """
     :param graph: a list of Node{serial_number, coordinate, type, edges{a list of Road{to, length, time, energy}}}
-    :param requests: a list of tuple(i, j), i, j denote pickup and delivery location respectively
+    :param requests: a list of (tuple(i, j), ph, ph), i, j denote pickup and delivery location respectively
     :return:
     """
+    reqs = [r[0] for r in requests]  # extract (i, j) from requests
     node_num = len(graph)
 
     # generate the matrix of distance
@@ -41,7 +42,7 @@ def single_car_tour_graph(graph, requests):
     for i, node in enumerate(graph):
         if node.type.name in D.keys():
             if node.type.name == 'Pick':  # obtain information between pickup to delivery location
-                for r in requests:
+                for r in reqs:
                     if node.serial_number == r[0]:
                         node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][r[-1]]
                         break
@@ -64,5 +65,4 @@ def single_car_tour_graph(graph, requests):
 
 if __name__ == '__main__':
     graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
-    reqs = [r[0] for r in requests]
-    single_car_tour_graph(graph, reqs)
+    single_car_tour_graph(graph, requests)

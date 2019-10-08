@@ -35,16 +35,15 @@ class Encoder(nn.Module):
         if self.use_cuda:
             enc_init_hx = enc_init_hx.cuda()
 
-        # enc_init_hx.uniform_(-(1. / math.sqrt(hidden_dim)),
-        #        1. / math.sqrt(hidden_dim))
+        # enc_init_hx = Parameter(enc_init_hx, requires_grad=True)
+        # enc_init_hx.uniform_(-(1. / math.sqrt(hidden_dim)), 1. / math.sqrt(hidden_dim))
 
         enc_init_cx = Parameter(torch.zeros(hidden_dim), requires_grad=False)
         if self.use_cuda:
             enc_init_cx = enc_init_cx.cuda()
 
-        # enc_init_cx = nn.Parameter(enc_init_cx)
-        # enc_init_cx.uniform_(-(1. / math.sqrt(hidden_dim)),
-        #        1. / math.sqrt(hidden_dim))
+        # enc_init_cx = nn.Parameter(enc_init_cx, requires_grad=True)
+        # enc_init_cx.uniform_(-(1. / math.sqrt(hidden_dim)), 1. / math.sqrt(hidden_dim))
         return enc_init_hx, enc_init_cx
 
 

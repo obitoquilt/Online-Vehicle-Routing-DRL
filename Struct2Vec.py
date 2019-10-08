@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from NodeAndEdge import *
-import torch.nn.functional as F
 from GenetateBigGraph import generate_big_graph
 from TourGraphCreation import single_car_tour_graph
 
@@ -14,8 +13,10 @@ graph = single_car_tour_graph(graph, reqs)
 
 ser_num_list = []
 node_list = graph  # 小图的节点列表
+
 for node in node_list:
     ser_num_list.append(node.serial_number)
+
 for node in node_list:
     node.serial_number = ser_num_list.index(node.serial_number)
     for edge in node.edges:
@@ -119,5 +120,5 @@ for _ in range(R):
         x_all.append(xi)
 
 print(x_all)
-print(mu_all)
+print(mu_all.shape)
 print(list(struct2vec.named_parameters()))

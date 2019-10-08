@@ -74,7 +74,7 @@ class Attention(nn.Module):
         # ref is now [batch_size x hidden_dim x sourceL]
         ref = ref.permute(1, 2, 0)
         q = self.project_query(query).unsqueeze(2)  # [batch_size x hidden_dim x 1]
-        e = self.project_ref(ref)     # [batch_size x hidden_dim x sourceL]
+        e = self.project_ref(ref)  # [batch_size x hidden_dim x sourceL]
         # expand the query by sourceL
         # [batch x dim x sourceL]
         expanded_q = q.repeat(1, 1, e.size(2))
@@ -474,3 +474,46 @@ class NeuralCombOptRL(nn.Module):
         R = self.objective_fn(actions, self.use_cuda)
 
         return R, v, probs, actions, action_idxs
+
+
+def find_distance(p, d, graph):
+
+    for node in graph:
+        if node.serial_number == p:
+            for e in node.edges:
+                if e.to == d:
+                    return e.length
+
+
+def reward_fn(tour, graph, mapping_table, reqs):
+    """
+    :param tour: a solution of vehicle k
+    :param graph: tour graph creation for vehicle k (i.e. small graph)
+    :param mapping_table: mapping table
+    :param reqs: a list of tuple(i, j)
+    :return:
+    """
+    dest_id = None
+    for node in graph:
+        node.serial_number = mapping_table[node.serial_number]
+        if node.type.name == 'Destination':
+            dest_id = node.serial_number
+
+    # clip the tour
+    for i, t in enumerate(tour):
+        if t == dest_id:
+            break
+    tour = tour[:i]
+
+    # objective reward
+    sum_x_q = 0
+    for p, d in reqs:
+        if d in tour[tour.index(p) + 1:]:
+            sum_x_q += 1
+
+    W = 0
+    for i in range(len(tour) - 1):
+        W += find_distance(tour[i], tour[i + 1], graph)
+
+    # constraint penalty
+

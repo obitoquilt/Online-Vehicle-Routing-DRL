@@ -1,1 +1,1 @@
-## Online Vehicle Routing with Reinforcement Learning
+## Online Vehicle Routing with Deep Reinforcement Learning

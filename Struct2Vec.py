@@ -52,8 +52,8 @@ def Struct2Vec(graph, p_dim=128, R=4):
             edge.to = ser_num_list.index(edge.to)
 
     # print the type of node
-    # for node in node_list:
-    #     print(node.type.name)
+    for node in node_list:
+        print(node.type.name, node.serial_number)
 
     node_num = len(node_list)  # 小图的节点总数
 
@@ -129,3 +129,4 @@ if __name__ == '__main__':
     x_all, mu_all, ser_num_list = Struct2Vec(graph)
     print(x_all)
     print(mu_all)
+    print(ser_num_list)

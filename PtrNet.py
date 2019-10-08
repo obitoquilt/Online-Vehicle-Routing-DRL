@@ -74,7 +74,7 @@ class Attention(nn.Module):
         # ref is now [batch_size x hidden_dim x sourceL]
         ref = ref.permute(1, 2, 0)
         q = self.project_query(query).unsqueeze(2)  # [batch_size x hidden_dim x 1]
-        e = self.project_ref(ref)  # [batch_size x hidden_dim x sourceL]
+        e = self.project_ref(ref)     # [batch_size x hidden_dim x sourceL]
         # expand the query by sourceL
         # [batch x dim x sourceL]
         expanded_q = q.repeat(1, 1, e.size(2))

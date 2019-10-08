@@ -82,6 +82,7 @@ def Struct2Vec(graph, p_dim=128, R=4):
             ui = torch.Tensor(ui).unsqueeze(1)
             ti = torch.Tensor(ti).unsqueeze(1)
             xi = []
+
             if node.type.name == "Start":
                 xi.append(node.type.battery_size)
                 xi.append(node.type.initial_energy)

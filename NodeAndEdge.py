@@ -71,3 +71,12 @@ class Node:
     def add_road(self, to, length, time, energy):
         road = Road(to, length, time, energy)
         self.edges.append(road)
+
+
+class Request:
+    def __init__(self,number,pick,delivery,deadline,capacity_required):
+        self.number=number
+        self.pick=pick
+        self.delivery=delivery
+        self.deadline=deadline
+        self.capacity_required=capacity_required

@@ -6,6 +6,7 @@ import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
 
+
 class Encoder(nn.Module):
     """Maps a graph represented as an input sequence to a hidden vector
     """
@@ -34,6 +35,7 @@ class Encoder(nn.Module):
             enc_init_cx = enc_init_cx.cuda()
         return enc_init_hx, enc_init_cx
 
+
 class Attention(nn.Module):
     """A generic attention module for a decoder in seq2seq"""
 
@@ -47,7 +49,7 @@ class Attention(nn.Module):
         v = torch.FloatTensor(dim)
         if use_cuda:
             v = v.cuda()
-        self.v = nn.Parameter(v, requires_grad=True)    # 定义模型参数
+        self.v = nn.Parameter(v, requires_grad=True)  # 定义模型参数
         self.v.data.uniform_(-1. / math.sqrt(dim), 1. / math.sqrt(dim))
 
     def forward(self, query, ref):
@@ -64,9 +66,9 @@ class Attention(nn.Module):
         # [batch x dim x sourceL]
         expanded_q = q.repeat(1, 1, e.size(2))
         # [batch x 1 x hidden_dim]
-        v_view = self.v.unsqueeze(0).expand(expanded_q.size(0), len(self.v)).unsqueeze(1)   # unsqueeze 将tensor变形
+        v_view = self.v.unsqueeze(0).expand(expanded_q.size(0), len(self.v)).unsqueeze(1)  # unsqueeze 将tensor变形
         # [batch_size x 1 x hidden_dim] * [batch_size x hidden_dim x sourceL] = [batch_size x 1 x sourceL]
-        u = torch.bmm(v_view, self.tanh(expanded_q + e)).squeeze(1)    # bmm 将两个矩阵相乘
+        u = torch.bmm(v_view, self.tanh(expanded_q + e)).squeeze(1)  # bmm 将两个矩阵相乘
         if self.use_tanh:
             logits = self.C * self.tanh(u)
         else:
@@ -101,7 +103,7 @@ class Decoder(nn.Module):
         self.sm = nn.Softmax(dim=1)
 
     # 将已经出现的点的概率设为*，避免重复选择
-    def apply_mask_to_logits(self, logits, mask, prev_idxs,graph,mapping_table):
+    def apply_mask_to_logits(self, logits, mask, prev_idxs, graph, mapping_table):
         if mask is None:
             mask = torch.zeros(logits.size()).byte()  # dtype=torch.uint8
             if self.use_cuda:
@@ -114,19 +116,18 @@ class Decoder(nn.Module):
         if prev_idxs is not None:
             # set most recently selected idx values to 1
             maskk[list(range(logits.size(0))), prev_idxs] = 1  # awesome!
-            node_accesible=[]
-            cur_node=prev_idxs
-            cur_node=mapping_table[cur_node]
-            for i in graph[cur_node].edges:
-                node_accesible.append(i.to)
-            for i in range(len(graph)):
-                if i not in node_accesible:
-                    maskk[i]=1
+            # node_accesible = []
+            # cur_node = prev_idxs
+            # cur_node = mapping_table[cur_node]
+            # for i in graph[cur_node].edges:
+            #     node_accesible.append(i.to)
+            # for i in range(len(graph)):
+            #     if i not in node_accesible:
+            #         maskk[i] = 1
             logits[maskk] = -np.inf
         return logits, maskk
 
-
-    def forward(self, decoder_input, embedded_inputs, hidden, context):
+    def forward(self, decoder_input, embedded_inputs, hidden, context, graph, mapping_table):
         """
         Args:
             decoder_input: The initial input to the decoder
@@ -158,10 +159,10 @@ class Decoder(nn.Module):
                 ref, logits = self.glimpse(g_l, context)
                 logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
                 # [batch_size x h_dim x sourceL] * [batch_size x sourceL x 1] = [batch_size x h_dim x 1]
-                g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)   # bmm是将两个矩阵相乘
+                g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)  # bmm是将两个矩阵相乘
             _, logits = self.pointer(g_l, context)
 
-            logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
+            logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs, graph, mapping_table)
             probs = self.sm(logits)
             return hy, cy, probs, logit_mask
 
@@ -259,7 +260,7 @@ class Decoder(nn.Module):
                 idxs = probs.multinomial(1).squeeze(1)
                 break
 
-        sels = embedded_inputs[idxs, list(range(batch_size)), :]   # [batch_size x embedding_size]
+        sels = embedded_inputs[idxs, list(range(batch_size)), :]  # [batch_size x embedding_size]
         return sels, idxs
 
 
@@ -300,13 +301,13 @@ class PointerNetwork(nn.Module):
         self.decoder_in_0 = nn.Parameter(dec_in_0)
         self.decoder_in_0.data.uniform_(-1. / math.sqrt(embedding_dim), 1. / math.sqrt(embedding_dim))
 
-    def forward(self, inputs):
+    def forward(self, inputs, graph, mapping_table):
         """ Propagate inputs through the network
         Args:
             inputs: [sourceL x batch_size x embedding_dim]
         """
 
-        (encoder_hx, encoder_cx) = self.encoder.enc_init_state   #初始化encoder的state
+        (encoder_hx, encoder_cx) = self.encoder.enc_init_state  # 初始化encoder的state
         encoder_hx = encoder_hx.unsqueeze(0).repeat(inputs.size(1), 1).unsqueeze(0)  # [1 x batch_size x hidden_dim]
         # unsqueeze:将tensor变形,添加tensor的维度
         # repeat:在特定的维度重复tensor
@@ -326,7 +327,7 @@ class PointerNetwork(nn.Module):
         (pointer_probs, input_idxs), dec_hidden_t = self.decoder(decoder_input,
                                                                  inputs,
                                                                  dec_init_state,
-                                                                 enc_h)
+                                                                 enc_h, graph, mapping_table)
 
         return pointer_probs, input_idxs
 
@@ -358,7 +359,7 @@ class CriticNetwork(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1)     # baseline prediction, a single scalar
+            nn.Linear(hidden_dim, 1)  # baseline prediction, a single scalar
         )
 
     def forward(self, inputs):
@@ -367,7 +368,7 @@ class CriticNetwork(nn.Module):
             inputs: [sourceL x batch_size x embedding_dim] of embedded inputs
         """
 
-        (encoder_hx, encoder_cx) = self.encoder.enc_init_state    # [hidden_dim]
+        (encoder_hx, encoder_cx) = self.encoder.enc_init_state  # [hidden_dim]
         encoder_hx = encoder_hx.unsqueeze(0).repeat(inputs.size(1), 1).unsqueeze(0)  # [1 x batch_size x hidden_dim]
         encoder_cx = encoder_cx.unsqueeze(0).repeat(inputs.size(1), 1).unsqueeze(0)
 
@@ -375,7 +376,7 @@ class CriticNetwork(nn.Module):
         enc_outputs, (enc_h_t, enc_c_t) = self.encoder(inputs, (encoder_hx, encoder_cx))
 
         # grab the hidden state and process it via the process block
-        process_block_state = enc_h_t[-1]    # [batch_size x hidden_dim]
+        process_block_state = enc_h_t[-1]  # [batch_size x hidden_dim]
         for _ in range(self.n_process_blocks):
             ref, logits = self.process_block(process_block_state, enc_outputs)
             process_block_state = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)
@@ -420,16 +421,16 @@ class NeuralCombOptRL(nn.Module):
         # # utilize critic network
         # if not self.is_ema:
         self.critic_net = CriticNetwork(
-               embedding_dim,
-               hidden_dim,
-               n_process_blocks,
-               tanh_exploration,
-               False,
-               use_cuda)
+            embedding_dim,
+            hidden_dim,
+            n_process_blocks,
+            tanh_exploration,
+            False,
+            use_cuda)
 
         self.embedding = nn.Linear(input_dim, embedding_dim)
 
-    def forward(self, inputs):
+    def forward(self, inputs, graph, mapping_table):
         """
         Args:
             inputs: [batch_size, sourceL, input_dim]
@@ -440,7 +441,7 @@ class NeuralCombOptRL(nn.Module):
         embedded_inputs = self.embedding(inputs).permute(1, 0, 2)
         # query the actor net for the input indices
         # making up the output, and the pointer attn
-        probs_, action_idxs = self.actor_net(embedded_inputs)
+        probs_, action_idxs = self.actor_net(embedded_inputs, graph, mapping_table)
         # probs_: [seq_len x batch_size x seq_len], action_idxs: [seq_len x batch_size]
         # 这里的probs_与action_indxs分别代表什么
 
@@ -449,7 +450,7 @@ class NeuralCombOptRL(nn.Module):
         v = None
 
         for action_id in action_idxs:
-            actions.append(inputs[list(range(batch_size)), action_id, :]) # 这一步没有看懂！！！
+            actions.append(inputs[list(range(batch_size)), action_id, :])  # 这一步没有看懂！！！
 
         if self.is_train:
             # probs_ is a list of len sourceL of [batch_size x sourceL]
@@ -471,7 +472,6 @@ class NeuralCombOptRL(nn.Module):
         return R, v, probs, actions, action_idxs
 
 
-
 # define Reward
 def reward(sample_solution, USE_CUDA=True):
     """
@@ -480,16 +480,15 @@ def reward(sample_solution, USE_CUDA=True):
     """
 
     batch_size = sample_solution[0].size(0)
-    n = len(sample_solution)    # denotes n cities
+    n = len(sample_solution)  # denotes n cities
     tour_len = torch.zeros([batch_size])
 
     if USE_CUDA:
         tour_len = tour_len.cuda()
 
-    for i in range(n-1):
-        tour_len += torch.norm(sample_solution[i] - sample_solution[i+1], dim=1)
+    for i in range(n - 1):
+        tour_len += torch.norm(sample_solution[i] - sample_solution[i + 1], dim=1)
 
-    tour_len += torch.norm(sample_solution[n-1] - sample_solution[0], dim=1)      # 计算路径长度
+    tour_len += torch.norm(sample_solution[n - 1] - sample_solution[0], dim=1)  # 计算路径长度
 
     return tour_len
-

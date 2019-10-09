@@ -59,6 +59,7 @@ class Road:
         self.length = length
         self.time = time
         self.energy = energy
+        self.cars_arrive_time = []
 
 
 class Node:
@@ -94,3 +95,4 @@ class Car:
         self.cur_energy = battery_size
         self.used_capacity = 0
         self.finished_request = []
+        self.tour_time = []

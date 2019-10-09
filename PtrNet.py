@@ -571,3 +571,4 @@ def reward_fn(tour, graph, mapping_table, requests):
         C += max(cur_capacity - C_bar, 0)
 
     C_L_star = cur_capacity
+

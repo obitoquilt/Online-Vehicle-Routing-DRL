@@ -516,7 +516,7 @@ def reward_fn(tour, graph, mapping_table, requests):
     """
     dest_id = None
     for node in graph:
-        node.serial_number = mapping_table[node.serial_number]
+        # node.serial_number = mapping_table[node.serial_number]
         if node.type.name == 'Destination':
             dest_id = node.serial_number
 

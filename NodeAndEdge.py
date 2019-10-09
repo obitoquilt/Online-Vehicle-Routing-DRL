@@ -92,5 +92,5 @@ class Car:
         self.load_request = []
         self.tour_len = 0
         self.cur_energy = battery_size
-        self.capacity_used = 0
-        self.finish_request = []
+        self.used_capacity = 0
+        self.finished_request = []

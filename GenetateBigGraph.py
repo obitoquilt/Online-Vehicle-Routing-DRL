@@ -46,8 +46,11 @@ def generate_common_graph(node_num, lower_bound, high_bound):
     # 参数: 节点数量 坐标范围下界 坐标范围上界
     result = []
     coordinate_list = []
-    x = random.sample(range(lower_bound, high_bound), node_num)
-    y = random.sample(range(lower_bound, high_bound), node_num)
+    x=[]
+    y=[]
+    for i in range(node_num):
+        x.append(random.uniform(lower_bound,high_bound))
+        y.append(random.uniform(lower_bound,high_bound))
     coordinates = list(zip(x, y))
     for i, coordinate in enumerate(coordinates):
         type = Commom()

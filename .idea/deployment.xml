@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="server_1">
+  <component name="PublishConfigData" serverName="server_1">
     <serverData>
       <paths name="server_1">
         <serverdata>
@@ -12,7 +12,7 @@
       <paths name="server_2">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/Online-Vehicle-Routing-DRL" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
@@ -24,6 +24,5 @@
         </serverdata>
       </paths>
     </serverData>
-    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

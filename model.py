@@ -117,14 +117,14 @@ class Decoder(nn.Module):
         if prev_idxs is not None:
             # set most recently selected idx values to 1
             maskk[list(range(logits.size(0))), prev_idxs] = 1  # awesome!
-            node_accesible = []
-            cur_node = prev_idxs
-            cur_node = mapping_table[cur_node]
-            for i in graph[cur_node].edges:
-                node_accesible.append(i.to)
-            for i in range(len(graph)):
-                if i not in node_accesible:
-                    maskk[i] = 1
+            # node_accesible = []
+            # cur_node = prev_idxs
+            # cur_node = mapping_table[cur_node]
+            # for i in graph[cur_node].edges:
+            #     node_accesible.append(i.to)
+            # for i in range(len(graph)):
+            #     if i not in node_accesible:
+            #         maskk[i] = 1
             logits[maskk] = -np.inf
         return logits, maskk
 

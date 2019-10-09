@@ -13,7 +13,7 @@ import random
 def single_car_tour_graph(graph, requests):
     """
     :param graph: a list of Node{serial_number, coordinate, type, edges{a list of Road{to, length, time, energy}}}
-    :param requests: a list of (tuple(i, j), ph, ph), i, j denote pickup and delivery location respectively
+    :param requests: a list of (tuple(p, d), deadline, required_capacity), p, d denote pickup and delivery location respectively
     :return:
     """
     reqs=[]

@@ -27,8 +27,8 @@ def generate_big_graph(node_num, lower_bound, high_bound, request_num, depot_num
     requests = {}
     for i, re in enumerate(requests_temp):
         request = Request(i, re[0], re[1], re[2], re[3])
-        common_graph[re[0]].type = Pick(re[2],re[3],i)
-        common_graph[re[1]].type = Delivery(re[2],-re[3],i)
+        common_graph[re[0]].type = Pick(re[2], re[3], i)
+        common_graph[re[1]].type = Delivery(re[2], -re[3], i)
         requests[i] = request
     for depot in depots:
         R = random.randint(100, 200)

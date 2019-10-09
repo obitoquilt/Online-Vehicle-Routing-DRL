@@ -16,7 +16,10 @@ def single_car_tour_graph(graph, requests):
     :param requests: a list of (tuple(i, j), ph, ph), i, j denote pickup and delivery location respectively
     :return:
     """
-    reqs = [r[0] for r in requests]  # extract (i, j) from requests
+    reqs=[]
+    for key in requests.keys():
+        re=requests[key]
+        reqs.append((re.pick,re.delivery))
     node_num = len(graph)
 
     # generate the matrix of distance

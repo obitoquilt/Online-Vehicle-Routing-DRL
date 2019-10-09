@@ -9,7 +9,8 @@ class Start:
 
 
 class Pick:
-    def __init__(self, pickup_deadline, capacity_required, time=0, distance=0, energy=0, Hq=0, constant=0):
+    def __init__(self, pickup_deadline, capacity_required, request_num, car_number=-1, time=0, distance=0, energy=0,
+                 Hq=0, constant=0):
         # 取包裹最晚时间，货物大小，货物起点到终点的时间，货物起点到终点的距离，货物起点到终点消耗的能量，是否有其他车将在下一站取得该包裹，常量0
         self.pickup_deadline = pickup_deadline
         self.capacity_required = capacity_required
@@ -18,14 +19,17 @@ class Pick:
         self.energy = energy
         self.Hq = Hq
         self.constant = constant
+        self.request_num = request_num
+        self.car_number = car_number
         self.name = "Pick"
 
 
 class Delivery:
-    def __init__(self, delivery_deadline, capacity_required):
+    def __init__(self, delivery_deadline, capacity_required, request_number):
         # 送货期限，货物大小的相反数
         self.delivery_deadline = delivery_deadline
         self.capacity_required = capacity_required
+        self.request_number = request_number
         self.name = "Delivery"
 
 
@@ -63,8 +67,30 @@ class Node:
         self.serial_number = serial_number  # node number
         self.coordinate = coordinate
         self.type = type  # 类的对象
-        self.edges = []   # a list of Road object
+        self.edges = []  # a list of Road object
 
     def add_road(self, to, length, time, energy):
         road = Road(to, length, time, energy)
         self.edges.append(road)
+
+
+class Request:
+    def __init__(self, number, pick, delivery, deadline, capacity_required):
+        self.number = number
+        self.pick = pick
+        self.delivery = delivery
+        self.deadline = deadline
+        self.capacity_required = capacity_required
+
+
+class Car:
+    def __init__(self, number, cur_location, battery_size, capacity):
+        self.number = number
+        self.cur_location = cur_location
+        self.battery_size = battery_size
+        self.capacity = capacity
+        self.load_request = []
+        self.tour_len = 0
+        self.cur_energy = battery_size
+        self.capacity_used = 0
+        self.finish_request = []

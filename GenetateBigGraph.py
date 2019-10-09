@@ -19,17 +19,17 @@ def generate_big_graph(node_num, lower_bound, high_bound, request_num, depot_num
     pick = node_serials[:request_num]
     delivery = node_serials[request_num:2 * request_num]
     depots = node_serials[2 * request_num:2 * request_num + depot_num]
-    start = node_serials[-2]            # starting point of car
-    destination = node_serials[-1]      # destination of car
+    start = node_serials[-2]  # starting point of car
+    destination = node_serials[-1]  # destination of car
     deadline = random.sample(range(200, 300), request_num)
-    capacity_requested = random.sample(range(5, 20), request_num)
-    requests = list(zip(pick, delivery))
-    requests = list(zip(requests, deadline, capacity_requested))
-    for request in requests:
-        pick = request[0][0]
-        delivery = request[0][1]
-        common_graph[pick].type = Pick(request[1], request[2])
-        common_graph[delivery].type = Delivery(request[1], -request[2])
+    capacity_required = random.sample(range(5, 20), request_num)
+    requests_temp = list(zip(pick, delivery, deadline, capacity_required))
+    requests = {}
+    for i, re in enumerate(requests_temp):
+        request = Request(i, re[0], re[1], re[2], re[3])
+        common_graph[re[0]].type = Pick(re[2],re[3],i)
+        common_graph[re[1]].type = Delivery(re[2],-re[3],i)
+        requests[i] = request
     for depot in depots:
         R = random.randint(100, 200)
         common_graph[depot].type = Depot(R)
@@ -46,8 +46,11 @@ def generate_common_graph(node_num, lower_bound, high_bound):
     # 参数: 节点数量 坐标范围下界 坐标范围上界
     result = []
     coordinate_list = []
-    x = random.sample(range(lower_bound, high_bound), node_num)
-    y = random.sample(range(lower_bound, high_bound), node_num)
+    x = []
+    y = []
+    for i in range(node_num):
+        x.append(random.uniform(lower_bound, high_bound))
+        y.append(random.uniform(lower_bound, high_bound))
     coordinates = list(zip(x, y))
     for i, coordinate in enumerate(coordinates):
         type = Commom()

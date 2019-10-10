@@ -4,6 +4,9 @@
 # @FileName: reward.py
 # @Software: PyCharm
 
+from NodeAndEdge import Car
+
+
 def find_something(node, d, graph, something=None):
     """
     :param node: corresponding node of pickup location
@@ -33,7 +36,7 @@ def find_delivery(p, requests):
             return r[0][1], r[-1]
 
 
-def reward_fn(tour, graph, mapping_table, requests):
+def reward_fn2(tour, graph, mapping_table, requests):
     """
     :param tour: a solution of vehicle k
     :param graph: tour graph creation for vehicle k (i.e. small graph)
@@ -99,3 +102,12 @@ def reward_fn(tour, graph, mapping_table, requests):
         C += max(cur_capacity - C_bar, 0)
 
     C_L_star = cur_capacity
+
+
+def reward_fn(cars, tours, graphs):
+    """
+    :param cars: a list of car object
+    :param tours: the set of solution of m vehicles
+    :param graphs:
+    :return:
+    """

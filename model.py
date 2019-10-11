@@ -8,7 +8,8 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-    """Maps a graph represented as an input sequence to a hidden vector
+    """
+    Maps a graph represented as an input sequence to a hidden vector
     """
 
     def __init__(self, input_dim, hidden_dim, use_cuda):
@@ -127,7 +128,7 @@ class Decoder(nn.Module):
             logits[maskk] = -np.inf
         return logits, maskk
 
-    def forward(self, decoder_input, embedded_inputs, hidden, context, graph, mapping_table):
+    def forward(self, decoder_input, embedded_inputs, hidden, context):
         """
         Args:
             decoder_input: The initial input to the decoder
@@ -162,7 +163,7 @@ class Decoder(nn.Module):
                 g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)  # bmm是将两个矩阵相乘
             _, logits = self.pointer(g_l, context)
 
-            logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs, graph, mapping_table)
+            logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
             probs = self.sm(logits)
             return hy, cy, probs, logit_mask
 
@@ -301,7 +302,7 @@ class PointerNetwork(nn.Module):
         self.decoder_in_0 = nn.Parameter(dec_in_0)
         self.decoder_in_0.data.uniform_(-1. / math.sqrt(embedding_dim), 1. / math.sqrt(embedding_dim))
 
-    def forward(self, inputs, graph, mapping_table):
+    def forward(self, inputs):
         """ Propagate inputs through the network
         Args:
             inputs: [sourceL x batch_size x embedding_dim]
@@ -327,7 +328,7 @@ class PointerNetwork(nn.Module):
         (pointer_probs, input_idxs), dec_hidden_t = self.decoder(decoder_input,
                                                                  inputs,
                                                                  dec_init_state,
-                                                                 enc_h, graph, mapping_table)
+                                                                 enc_h)
 
         return pointer_probs, input_idxs
 
@@ -430,7 +431,7 @@ class NeuralCombOptRL(nn.Module):
 
         self.embedding = nn.Linear(input_dim, embedding_dim)
 
-    def forward(self, inputs, graph, mapping_table):
+    def forward(self, inputs):
         """
         Args:
             inputs: [batch_size, sourceL, input_dim]
@@ -441,7 +442,7 @@ class NeuralCombOptRL(nn.Module):
         embedded_inputs = self.embedding(inputs).permute(1, 0, 2)
         # query the actor net for the input indices
         # making up the output, and the pointer attn
-        probs_, action_idxs = self.actor_net(embedded_inputs, graph, mapping_table)
+        probs_, action_idxs = self.actor_net(embedded_inputs)
         # probs_: [seq_len x batch_size x seq_len], action_idxs: [seq_len x batch_size]
         # 这里的probs_与action_indxs分别代表什么
 

@@ -40,7 +40,7 @@ class struct2vec_model(nn.Module):
 
 def Struct2Vec(graph, p_dim=128, R=4):
     # R denotes the iterations of var mu
-    node_list = graph  # 小图的节点列表
+    node_list = graph.copy()  # 小图的节点列表
     ser_num_list = []  # mapping table
 
     for node in node_list:

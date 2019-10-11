@@ -68,6 +68,7 @@ class Node:
         self.coordinate = coordinate
         self.type = type  # 类的对象
         self.edges = []  # a list of Road object
+        self.cars_arrive_time = []
 
     def add_road(self, to, length, time, energy):
         road = Road(to, length, time, energy)
@@ -92,5 +93,6 @@ class Car:
         self.load_request = []
         self.tour_len = 0
         self.cur_energy = battery_size
-        self.capacity_used = 0
-        self.finish_request = []
+        self.used_capacity = 0
+        self.finished_request = []
+        self.tour_time = []

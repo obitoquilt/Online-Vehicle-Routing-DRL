@@ -48,8 +48,7 @@ def single_car_tour_graph(graph, requests):
                 #     if node.serial_number == r[0]:
                 #         node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][r[-1]]
                 #         break
-                node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][
-                    reqs[node.serial_number]]
+                node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][reqs[node.serial_number]]
             node.edges = []
             for j, node_c in enumerate(graph):
                 if node_c.type.name in D[node.type.name] and (i != j):

@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 # parameters
 batch_size = 128
-train_size = 1000
+train_size = 100
 val_size = 1000
 input_dim = 128  # p dim
 embedding_dim = 128
@@ -50,11 +50,11 @@ training_dataset = OVRPDataset(num_samples=train_size,
                                depot_num=depot_num,
                                lower_bound=lower_bound,
                                high_bound=high_bound)
+tour_graph_set = OVRPDataset.get_tour_graph()
+request_set = OVRPDataset.get_request()
 
 # keep the original order
 training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
-tour_graph_set = OVRPDataset.get_tour_graph()
-request_set = OVRPDataset.get_requests()
 
 seq_len = len(tour_graph_set[0])   # the number of nodes after the connecting points are removed
 # instantiate the Neural Combinatorial Opt with RL module
@@ -108,7 +108,10 @@ for epoch in range(epochs):
         if use_cuda:
             sample_batch = sample_batch.cuda()
 
-        R, v, probs, actions, actions_idxs = model(sample_batch)
+        graphs = tour_graph_set[batch_id * batch_size: (batch_id + 1) * batch_size]
+        requests = request_set[batch_id * batch_size:(batch_id + 1) * batch_size]
+
+        R, v, probs, actions, actions_idxs = model(sample_batch, graphs, requests)
         advantage = R - v  # means L(π|s)-b(s)
 
         # compute the sum of the log probs for each tour in the batch

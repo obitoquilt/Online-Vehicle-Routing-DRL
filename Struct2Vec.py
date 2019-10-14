@@ -115,7 +115,7 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
         # print(list(struct2vec.named_parameters()))
 
-        return x_all, mu_all, ser_num_list
+        return x_all, mu_all.detach_(), ser_num_list
 
 
 if __name__ == '__main__':
@@ -129,6 +129,6 @@ if __name__ == '__main__':
     graph = single_car_tour_graph(graph, requests)
     x_all, mu_all, ser_num_list = Struct2Vec(graph)
     print(x_all[0])
-    print(mu_all)
+    print(mu_all[0])
     print(mu_all.shape)  # 9 * 128
     print(ser_num_list)

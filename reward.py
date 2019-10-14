@@ -31,15 +31,8 @@ class OVRPDataset(nn.Module):
         self.tour_graph_set = []
         self.request_set = []
         for _ in tqdm(range(num_samples)):
-            big_graph, requests = generate_big_graph(copy.deepcopy(common_graph), node_num=node_num, request_num=request_num,
-                                                     depot_num=depot_num)
-            print('\n')
-            for node in big_graph:
-                print('{}, serial_number:{}'.format(node.type.name, node.serial_number))
-            print('\n')
-            for key in requests:
-                print('pick:{}, delivery:{}'.format(requests[key].pick, requests[key].delivery))
-            print('\n')
+            big_graph, requests = generate_big_graph(copy.deepcopy(common_graph), node_num=node_num,
+                                                     request_num=request_num, depot_num=depot_num)
             tour_graph = single_car_tour_graph(big_graph, requests)
             x_all, mu_all, ser_num_list = Struct2Vec(copy.deepcopy(tour_graph))
 
@@ -53,12 +46,12 @@ class OVRPDataset(nn.Module):
         return self.size
 
     def __getitem__(self, idx):
-        return self.data_set[idx]
+        return self.mu_set[idx]
 
     def get_tour_graph(self):
         return self.tour_graph_set
 
-    def get_requests(self):
+    def get_request(self):
         return self.request_set
 
 

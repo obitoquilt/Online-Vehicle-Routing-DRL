@@ -68,7 +68,8 @@ def single_car_tour_graph(graph, requests):
 
 
 if __name__ == '__main__':
-    from GenetateBigGraph import generate_big_graph
+    from GenetateBigGraph import generate_big_graph, generate_common_graph
 
-    graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
+    common_graph = generate_common_graph(node_num=10, lower_bound=1, high_bound=100)
+    graph, requests = generate_big_graph(common_graph, node_num=10, request_num=3, depot_num=1)
     single_car_tour_graph(graph, requests)

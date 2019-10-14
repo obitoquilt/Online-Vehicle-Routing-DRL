@@ -120,13 +120,15 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
 if __name__ == '__main__':
     import numpy as np
-    from GenetateBigGraph import generate_big_graph
+    from GenetateBigGraph import generate_big_graph, generate_common_graph
     from TourGraphCreation import single_car_tour_graph
 
     torch.set_printoptions(threshold=np.nan)  # show all data
-    graph, requests = generate_big_graph(node_num=10, lower_bound=1, high_bound=100, request_num=3, depot_num=1)
+    common_graph = generate_common_graph(node_num=10, lower_bound=1, high_bound=100)
+    graph, requests = generate_big_graph(common_graph, node_num=10, request_num=3, depot_num=1)
     graph = single_car_tour_graph(graph, requests)
     x_all, mu_all, ser_num_list = Struct2Vec(graph)
-    print(x_all)
+    print(x_all[0])
     print(mu_all)
+    print(mu_all.shape)  # 9 * 128
     print(ser_num_list)

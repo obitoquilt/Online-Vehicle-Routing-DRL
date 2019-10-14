@@ -4,6 +4,49 @@
 # @FileName: reward.py
 # @Software: PyCharm
 
+import torch
+import random
+from tqdm import tqdm
+import torch.nn as nn
+from GenerateBigGraph import generate_common_graph, generate_big_graph
+from TourGraphCreation import single_car_tour_graph
+from Struct2Vec import Struct2Vec
+
+
+# randomly generate the data of graph of vehicle
+class OVRPDataset(nn.Module):
+    """
+    data_set: [batch_size x seq_len x input_dim]
+    """
+
+    def __init__(self, num_samples, node_num, request_num, depot_num, lower_bound, high_bound, random_seed=111):
+        # request_num, depot_num: variable vars
+        super(OVRPDataset, self).__init__()
+        torch.manual_seed(random_seed)
+        random.seed(random_seed)
+        common_graph = generate_common_graph(node_num=node_num, lower_bound=lower_bound, high_bound=high_bound)
+        # [num_samples x seq_len x input_dim]
+        self.mu_set = []
+        self.tour_graph_set = []
+        for _ in tqdm(range(num_samples)):
+            big_graph, requests = generate_big_graph(common_graph, node_num=node_num, request_num=request_num,
+                                                     depot_num=depot_num)
+            tour_graph = single_car_tour_graph(big_graph, requests)
+            x_all, mu_all, ser_num_list = Struct2Vec(tour_graph)
+            self.mu_set.append(mu_all)
+            self.tour_graph_set.append(tour_graph)
+
+        self.size = len(self.data_set)
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        return self.data_set[idx]
+
+    def get_tour_graph(self):
+        return self.tour_graph_set
+
 
 def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
     """

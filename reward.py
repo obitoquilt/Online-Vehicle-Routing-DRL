@@ -30,15 +30,17 @@ class OVRPDataset(nn.Module):
         self.mu_set = []
         self.tour_graph_set = []
         self.request_set = []
+        self.car_set = []
         for _ in tqdm(range(num_samples)):
             big_graph, requests = generate_big_graph(copy.deepcopy(common_graph), node_num=node_num,
                                                      request_num=request_num, depot_num=depot_num)
-            tour_graph = single_car_tour_graph(big_graph, requests)
+            tour_graph, car = single_car_tour_graph(big_graph, requests)
             x_all, mu_all, ser_num_list = Struct2Vec(copy.deepcopy(tour_graph))
 
             self.mu_set.append(mu_all)
             self.tour_graph_set.append(tour_graph)
             self.request_set.append(requests)
+            self.car_set.append(car)
 
         self.size = len(self.data_set)
 
@@ -53,6 +55,9 @@ class OVRPDataset(nn.Module):
 
     def get_request(self):
         return self.request_set
+
+    def get_car(self):
+        return self.car_set
 
 
 def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):

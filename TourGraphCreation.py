@@ -6,7 +6,7 @@
 
 from math import inf
 from itertools import product
-from NodeAndEdge import Road
+from NodeAndEdge import Road, Car
 import random
 
 
@@ -57,13 +57,15 @@ def single_car_tour_graph(graph, requests):
             tour_graph.append(node)
 
     # L_k_0 point(start) is in the first place, then those of other stops are in a random order
+    car = None
     random.shuffle(tour_graph)
     for i, node in enumerate(tour_graph):
         if node.type.name == 'Start':
+            car = Car(number=0, cur_location=node.serial_number, battery_size=node.type.battery_size, capacity=node.type.capacity)
             tour_graph[0], tour_graph[i] = tour_graph[i], tour_graph[0]
             break
 
-    return tour_graph
+    return tour_graph, car
 
 
 if __name__ == '__main__':

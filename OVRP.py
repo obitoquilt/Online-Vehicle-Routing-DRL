@@ -17,7 +17,7 @@ from tqdm import tqdm
 batch_size = 128
 train_size = 100
 val_size = 1000
-input_dim = 128  # p dim
+input_dim = 128   # p dim
 embedding_dim = 128
 hidden_dim = 128
 n_process_blocks = 3
@@ -52,6 +52,7 @@ training_dataset = OVRPDataset(num_samples=train_size,
                                high_bound=high_bound)
 tour_graph_set = OVRPDataset.get_tour_graph()
 request_set = OVRPDataset.get_request()
+car_set = OVRPDataset.get_car()
 
 # keep the original order
 training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
@@ -110,8 +111,9 @@ for epoch in range(epochs):
 
         graphs = tour_graph_set[batch_id * batch_size: (batch_id + 1) * batch_size]
         requests = request_set[batch_id * batch_size:(batch_id + 1) * batch_size]
+        car = car_set[batch_id * batch_size:(batch_id + 1) * batch_size]
 
-        R, v, probs, actions, actions_idxs = model(sample_batch, graphs, requests)
+        R, v, probs, actions, actions_idxs = model(sample_batch, car, graphs, requests)
         advantage = R - v  # means L(π|s)-b(s)
 
         # compute the sum of the log probs for each tour in the batch

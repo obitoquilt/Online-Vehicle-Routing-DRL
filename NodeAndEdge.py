@@ -35,7 +35,9 @@ class Delivery:
 
 class Depot:
     def __init__(self, R):
-        # 充电速率
+        """
+        :param: R denotes the charging rate
+        """
         self.R = R
         self.name = "Depot"
 
@@ -55,7 +57,7 @@ class Commom:
 class Road:
     def __init__(self, to, length, time, energy):
         # 连接的另一个端点 道路长度 车辆走过这段路所用的时间 车辆走过这段路所消耗的电量
-        self.to = to  # serial_number
+        self.to = to     # serial_number
         self.length = length
         self.time = time
         self.energy = energy
@@ -69,7 +71,6 @@ class Node:
         self.type = type  # 类的对象
         self.edges = []  # a list of Road object
 
-
     def add_road(self, to, length, time, energy):
         road = Road(to, length, time, energy)
         self.edges.append(road)
@@ -82,7 +83,7 @@ class Request:
         self.delivery = delivery
         self.deadline = deadline
         self.capacity_required = capacity_required
-        self.isload=False
+        self.isload = False
 
 
 class Car:
@@ -97,5 +98,5 @@ class Car:
         self.used_capacity = 0
         self.finished_request = []
         self.tour_time = []
-        self.timeout=0
-        self.outofenergy=0
+        self.timeout = 0
+        self.outofenergy = 0

@@ -19,7 +19,7 @@ def generate_big_graph(node_num, lower_bound, high_bound, request_num, depot_num
     pick = node_serials[:request_num]
     delivery = node_serials[request_num:2 * request_num]
     depots = node_serials[2 * request_num:2 * request_num + depot_num]
-    start = node_serials[-2]  # starting point of car
+    start = node_serials[-2]        # starting point of car
     destination = node_serials[-1]  # destination of car
     deadline = random.sample(range(200, 300), request_num)
     capacity_required = random.sample(range(5, 20), request_num)

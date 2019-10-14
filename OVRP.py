@@ -50,9 +50,13 @@ training_dataset = OVRPDataset(num_samples=train_size,
                                depot_num=depot_num,
                                lower_bound=lower_bound,
                                high_bound=high_bound)
-training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 
-seq_len = len(tour_graph)  # the number of nodes after the connecting points are removed
+# keep the original order
+training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
+tour_graph_set = OVRPDataset.get_tour_graph()
+request_set = OVRPDataset.get_requests()
+
+seq_len = len(tour_graph_set[0])   # the number of nodes after the connecting points are removed
 # instantiate the Neural Combinatorial Opt with RL module
 model = NeuralCombOptRL(input_dim,
                         embedding_dim,

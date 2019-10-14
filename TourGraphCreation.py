@@ -22,7 +22,7 @@ def single_car_tour_graph(graph, requests):
     for key in requests:
         req = requests[key]
         reqs[req.pick] = req.delivery
-
+    # print('\nreqs:', reqs)
     # generate the matrix of distance
     dist = [[inf] * node_num for _ in range(node_num)]
     for node in graph:
@@ -49,6 +49,7 @@ def single_car_tour_graph(graph, requests):
                 #     if node.serial_number == r[0]:
                 #         node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][r[-1]]
                 #         break
+                # print('node.serial_number:', node.serial_number)
                 node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][reqs[node.serial_number]]
             node.edges = []
             for j, node_c in enumerate(graph):

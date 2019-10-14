@@ -6,6 +6,7 @@
 
 import torch
 import random
+import copy
 from tqdm import tqdm
 import torch.nn as nn
 from GenerateBigGraph import generate_common_graph, generate_big_graph
@@ -28,13 +29,23 @@ class OVRPDataset(nn.Module):
         # [num_samples x seq_len x input_dim]
         self.mu_set = []
         self.tour_graph_set = []
+        self.request_set = []
         for _ in tqdm(range(num_samples)):
-            big_graph, requests = generate_big_graph(common_graph, node_num=node_num, request_num=request_num,
+            big_graph, requests = generate_big_graph(copy.deepcopy(common_graph), node_num=node_num, request_num=request_num,
                                                      depot_num=depot_num)
+            print('\n')
+            for node in big_graph:
+                print('{}, serial_number:{}'.format(node.type.name, node.serial_number))
+            print('\n')
+            for key in requests:
+                print('pick:{}, delivery:{}'.format(requests[key].pick, requests[key].delivery))
+            print('\n')
             tour_graph = single_car_tour_graph(big_graph, requests)
-            x_all, mu_all, ser_num_list = Struct2Vec(tour_graph)
+            x_all, mu_all, ser_num_list = Struct2Vec(copy.deepcopy(tour_graph))
+
             self.mu_set.append(mu_all)
             self.tour_graph_set.append(tour_graph)
+            self.request_set.append(requests)
 
         self.size = len(self.data_set)
 
@@ -47,6 +58,9 @@ class OVRPDataset(nn.Module):
     def get_tour_graph(self):
         return self.tour_graph_set
 
+    def get_requests(self):
+        return self.request_set
+
 
 def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
     """
@@ -54,7 +68,7 @@ def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
     :param requests: a dic of request
     :param cars: a list of car object
     :param tours: the set of solution of m vehicles
-    :param graphs:a list of graph for each car
+    :param graphs: a list of graph for each car
     :return:
     """
     zipp = zip(cars, tours, graphs)

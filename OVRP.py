@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 # parameters
 batch_size = 128
-train_size = 100
+train_size = 128
 val_size = 1000
 input_dim = 128   # p dim
 embedding_dim = 128
@@ -25,7 +25,7 @@ n_glimpses = 1
 use_tanh = True
 C = 10  # tanh exploration
 n_epochs = 1
-use_cuda = True
+use_cuda = False
 is_train = True
 critic_beta = 0.9
 beam_size = 1  # if set B=1 then the technique is same as greedy search
@@ -50,9 +50,9 @@ training_dataset = OVRPDataset(num_samples=train_size,
                                depot_num=depot_num,
                                lower_bound=lower_bound,
                                high_bound=high_bound)
-tour_graph_set = OVRPDataset.get_tour_graph()
-request_set = OVRPDataset.get_request()
-car_set = OVRPDataset.get_car()
+tour_graph_set = training_dataset.get_tour_graph()
+request_set = training_dataset.get_request()
+car_set =training_dataset.get_car()
 
 # keep the original order
 training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
@@ -106,12 +106,15 @@ epochs = 100
 for epoch in range(epochs):
     # sample_batch is [batch_size x sourceL x input_dim]
     for batch_id, sample_batch in enumerate(tqdm(training_dataloader, disable=False)):
-        if use_cuda:
-            sample_batch = sample_batch.cuda()
-
         graphs = tour_graph_set[batch_id * batch_size: (batch_id + 1) * batch_size]
         requests = request_set[batch_id * batch_size:(batch_id + 1) * batch_size]
         car = car_set[batch_id * batch_size:(batch_id + 1) * batch_size]
+
+        if use_cuda:
+            sample_batch = sample_batch.cuda()
+            # graphs = torch.Tensor(graphs).cuda()
+            # requests = torch.Tensor(requests).cuda()
+            # car = torch.Tensor(car).cuda()
 
         R, v, probs, actions, actions_idxs = model(sample_batch, car, graphs, requests)
         advantage = R - v  # means L(π|s)-b(s)

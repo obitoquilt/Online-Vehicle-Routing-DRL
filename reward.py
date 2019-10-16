@@ -123,4 +123,4 @@ def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
         O += len(car.finished_request) - C1 * car.tour_len
         P += C2 * car.timeout + C4 * car.used_capacity
 
-    return torch.tensor([O - P], dtype=torch.float32)
+    return torch.FloatTensor([O - P])

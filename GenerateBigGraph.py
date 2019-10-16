@@ -10,6 +10,7 @@ def generate_big_graph(common_graph, node_num, request_num, depot_num):
     :param depot_num: the number of depot
     :return:
     """
+    random.seed(111)
     uncommon_node_num = 2 * request_num + depot_num + 2
     assert uncommon_node_num <= node_num, "uncommon_node_num must be less than node_num!"
     node_serials = random.sample(range(0, node_num), uncommon_node_num)

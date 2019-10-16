@@ -14,7 +14,7 @@ from reward import reward_fn, OVRPDataset
 from tqdm import tqdm
 
 # parameters
-batch_size = 128
+batch_size = 1
 train_size = 128
 val_size = 1000
 input_dim = 128   # p dim
@@ -39,7 +39,7 @@ critic_lr_decay_rate = 0.96
 origin_node_num = 10  # the number of nodes in the original graph
 lower_bound = 1
 high_bound = 100
-request_num = 3
+request_num = 1
 depot_num = 1
 
 load_path = ''
@@ -118,6 +118,7 @@ for epoch in range(epochs):
 
         R, v, probs, actions, actions_idxs = model(sample_batch, car, graphs, requests)
         advantage = R - v  # means L(π|s)-b(s)
+        advantage = -advantage
 
         # compute the sum of the log probs for each tour in the batch
         logprobs = sum([torch.log(prob) for prob in probs])
@@ -148,4 +149,4 @@ for epoch in range(epochs):
         step += 1
 
         if step % log_step == 0:
-            print('epoch: {}, train_batch_id: {}, avg_reward: {}'.format(i, batch_id, R.mean().item()))
+            print('epoch: {}, train_batch_id: {}, avg_reward: {}'.format(epoch, batch_id, R.mean().item()))

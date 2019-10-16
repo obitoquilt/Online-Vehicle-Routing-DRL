@@ -123,6 +123,7 @@ class Decoder(nn.Module):
 
             choose_i = torch.LongTensor([0])  ##
             mask.index_fill_(1, choose_i, 1)  ##
+            # mask[0, :] = 1
 
             if self.use_cuda:
                 mask = mask.cuda()
@@ -154,23 +155,29 @@ class Decoder(nn.Module):
             graphmask = mask.clone()  # [batch_size x sourceL]
             graphlogits = logits.clone()  # [batch_size x sourceL]
 
+            list_set = list(range(graphmask.size(1)))
+
             for i, (prev_idx, maskki, logitssi, node_list, ser_num_list) in enumerate(
                     zip(prev_idxs, graphmask, graphlogits, batch_node_list, batch_ser_num_list)):
                 for node in node_list:
                     if node.serial_number == prev_idx:
-                        graphmask[i].fill_(1)
+
+                        list_copy = copy.deepcopy(list_set)
                         for edge in node.edges:
-                            graphmask[i][edge.to] = 0
-                        if node.edges == []:
+                            list_copy.remove(edge.to)
+                        for novisit in list_copy:
+                            graphmask[i][novisit] = 1
+                        # if 0 not in graphmask[i]:
+                        #     graphmask[i].fill_(0)
+
+                        if len(node.edges) == 0:
                             graphmask[i].fill_(0)
                         break
 
             graphlogits[graphmask] = -np.inf
             return graphlogits, graphmask
 
-        def recurrence(x, hidden, logit_mask,
-                       prev_idxs):  # hx, cx, probs, mask = recurrence(decoder_input, hidden, mask, idxs)
-
+        def recurrence(x, hidden, logit_mask, prev_idxs):
             hx, cx = hidden  # batch_size x hidden_dim
             # gates: [batch_size x (hidden_dim x 4)]
             gates = self.input_weights(x) + self.hidden_weights(hx)
@@ -185,6 +192,7 @@ class Decoder(nn.Module):
             hy = outgate * torch.tanh(cy)  # batch_size x hidden_dim
 
             g_l = hy
+            '''
             for _ in range(self.n_glimpses):
                 ref, logits = self.glimpse(g_l, context)  # logits:[batch_size x sourceL]
                 logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
@@ -193,13 +201,14 @@ class Decoder(nn.Module):
                 # [batch_size x h_dim x sourceL] * [batch_size x sourceL x 1] = [batch_size x h_dim x 1]
                 # g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)
                 g_l = torch.bmm(ref, self.sm(graphlogits).unsqueeze(2)).squeeze(2)
+            '''
             _, logits = self.pointer(g_l, context)
 
             logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
             graphlogits, graphmask = apply_graphmask_to_logits(logits, logit_mask, prev_idxs, batch_node_list,
                                                                batch_ser_num_list)
             probs = self.sm(graphlogits)
-            return hy, cy, probs, graphmask
+            return hy, cy, probs, logit_mask
 
         def topk(x, k):
             a = [(idx, e[-1]) for (idx, e) in enumerate(x)]
@@ -301,7 +310,6 @@ class Decoder(nn.Module):
         """
         batch_size = probs.size(0)
         # idxs is [batch_size]
-        print(probs)
         idxs = probs.multinomial(1).squeeze(1)
 
         # due to race conditions, might need to resample here
@@ -309,7 +317,7 @@ class Decoder(nn.Module):
             # compare new idxs elementwise with the previous idxs.
             # If any matches, then need to resample
             if old_idxs.eq(idxs).any():
-                print('[!] resampling due to race condition')
+                # print('[!] resampling due to race condition')
                 idxs = probs.multinomial(1).squeeze(1)
                 break
 
@@ -542,9 +550,6 @@ class NeuralCombOptRL(nn.Module):
         time_penalty = 120  # min
 
         for i, ser_num_list in enumerate(batch_ser_num_list):
-            print('length', len(action_idxs))
-            print('action_idxs', action_idxs[i])
-            print('ser_num_list', ser_num_list)
             action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
         #    for id in action_idxs[i]:
         #        id = ser_num_list[id]

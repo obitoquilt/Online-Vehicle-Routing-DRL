@@ -42,7 +42,7 @@ class OVRPDataset(nn.Module):
             self.request_set.append(requests)
             self.car_set.append(car)
 
-        self.size = len(self.data_set)
+        self.size = len(self.mu_set)
 
     def __len__(self):
         return self.size
@@ -60,7 +60,7 @@ class OVRPDataset(nn.Module):
         return self.car_set
 
 
-def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
+def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
     """
     :param time_penalty: the time penalty when car is out of energy
     :param requests: a dic of request
@@ -69,18 +69,19 @@ def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
     :param graphs: a list of graph for each car
     :return:
     """
-    zipp = zip(cars, tours, graphs)
+    zipp = zip(Cars, Tours, Graphs, Requests)
     O = 0
     P = 0
     for z in zipp:
         car = z[0]
         tour = z[1]
         graph_temp = z[2]
+        requests = z[3]
         graph = {}
         cur_time = 0
         for node in graph_temp:
             graph[node.serial_number] = node
-        for i in range(len(tour)):
+        for i in range(len(tour) - 1):
             node_number = tour[i]
             node = graph[node_number]
             if node.type.name == "Start":
@@ -96,7 +97,7 @@ def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
                         car.used_capacity += request.capacity_required
             elif node.type.name == "Delivery":
                 car.tour_time.append(cur_time)
-                request_num = node.type.request_num
+                request_num = node.type.request_number
                 if request_num in car.load_request:
                     car.timeout = max(cur_time - node.type.delivery_deadline, 0)
                     car.finished_request.append(request_num)
@@ -122,4 +123,4 @@ def reward_fn(cars, tours, graphs, requests, C1, C2, C4, time_penalty):
         O += len(car.finished_request) - C1 * car.tour_len
         P += C2 * car.timeout + C4 * car.used_capacity
 
-    return O - P
+    return torch.tensor([O - P], dtype=torch.float32)

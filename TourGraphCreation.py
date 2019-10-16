@@ -37,7 +37,7 @@ def single_car_tour_graph(graph, requests):
     # re-create the graph for single car
     tour_graph = []
     D = {'Start': ['Pick', 'Depot'],
-         'Pick': ['Pick', 'Delivery', 'Depot'],
+         'Pick': ['Pick', 'Delivery', 'Depot', 'Destination'],
          'Delivery': ['Pick', 'Delivery', 'Depot', 'Destination'],
          'Depot': ['Pick', 'Delivery', 'Depot', 'Destination'],
          'Destination': []}

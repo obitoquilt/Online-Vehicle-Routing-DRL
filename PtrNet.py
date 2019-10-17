@@ -173,13 +173,30 @@ class Decoder(nn.Module):
             return [x[e[0]] for e in a[-k:]]
 
         batch_size = context.size(1)
+        sourceL = context.size(0)
         outputs = []
         selections = []
-        idxs = None
+        # idxs = None
+        idxs = [0] * batch_size  #
+        selections.append(torch.LongTensor(idxs))  #
+        choose_i = torch.LongTensor([0])
+        prob1 = torch.zeros(batch_size, sourceL)
+        prob1.index_fill_(1, choose_i, 1)
+        outputs.append(prob1)
+
         mask = None
+        if mask is None:
+            # dtype=torch.uint8,mask:[batch_size x sourceL]
+            mask = torch.zeros(batch_size, self.seq_len).byte()
+
+            choose_i = torch.LongTensor([0])
+            mask.index_fill_(1, choose_i, 1)
+
+            if self.use_cuda:
+                mask = mask.cuda()
 
         if self.decode_type == 'stochastic':
-            for _ in range(self.seq_len):
+            for _ in range(self.seq_len - 1):
                 hx, cx, probs, mask = recurrence(decoder_input, hidden, mask, idxs)
                 hidden = (hx, cx)
                 # select the next inputs for the decoder [batch_size x hidden_dim]
@@ -196,7 +213,7 @@ class Decoder(nn.Module):
             # hidden: [batch_size x hidden_dim]
             # context: [sourceL x batch_size x hidden_dim]
             sel_cands = [[[list(), 0.0]] for _ in range(batch_size)]
-            for seq_id in range(self.seq_len):
+            for seq_id in range(self.seq_len - 1):
                 # probs: [batch_size x sourceL]
                 hx, cx, probs, mask = recurrence(decoder_input, hidden, mask, idxs)
                 hidden = (hx, cx)
@@ -318,8 +335,8 @@ class PointerNetwork(nn.Module):
         dec_init_state = (enc_h_t[-1], enc_c_t[-1])
 
         # repeat decoder_in_0 across batch
-        decoder_input = self.decoder_in_0.unsqueeze(0).repeat(inputs.size(1), 1)  # [batch_size x embedding_dim]
-
+        # decoder_input = self.decoder_in_0.unsqueeze(0).repeat(inputs.size(1), 1)  # [batch_size x embedding_dim]
+        decoder_input = inputs[0].clone().detach()
         (pointer_probs, input_idxs), dec_hidden_t = self.decoder(decoder_input,
                                                                  inputs,
                                                                  dec_init_state,
@@ -465,6 +482,21 @@ class NeuralCombOptRL(nn.Module):
         time_penalty = 120  # min
 
         # [batch_size]
+        batch_node_list = graphs  # 小图的节点列表
+        batch_ser_num_list = []  # mapping table
+
+        for node_list in batch_node_list:
+            ser_num_list = []
+            for node in node_list:
+                ser_num_list.append(node.serial_number)
+
+            batch_ser_num_list.append(ser_num_list)
+
+        for i, ser_num_list in enumerate(batch_ser_num_list):
+            action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
+
+        # for i, graph in enumerate(graphs):
+        #     action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
         R = self.objective_fn(car, action_idxs, graphs, requests, C1, C2, C4, time_penalty)
 
         return R, v, probs, actions, action_idxs

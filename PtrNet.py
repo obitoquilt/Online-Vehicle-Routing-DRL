@@ -1,15 +1,7 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/10/6 16:48
-# @Author  : obitolyz
-# @FileName: PtrNet.py
-# @Software: PyCharm
-
-# Most of the code borrowed from https://github.com/pemami4911/neural-combinatorial-rl-pytorch/blob/master/neural_combinatorial_rl.py
-import copy
 import torch
-import math
 import torch.nn as nn
 from torch.nn import Parameter
+import math
 import numpy as np
 
 
@@ -35,15 +27,16 @@ class Encoder(nn.Module):
         if self.use_cuda:
             enc_init_hx = enc_init_hx.cuda()
 
-        # enc_init_hx = Parameter(enc_init_hx, requires_grad=True)
-        # enc_init_hx.uniform_(-(1. / math.sqrt(hidden_dim)), 1. / math.sqrt(hidden_dim))
+        # enc_init_hx.uniform_(-(1. / math.sqrt(hidden_dim)),
+        #        1. / math.sqrt(hidden_dim))
 
         enc_init_cx = Parameter(torch.zeros(hidden_dim), requires_grad=False)
         if self.use_cuda:
             enc_init_cx = enc_init_cx.cuda()
 
-        # enc_init_cx = nn.Parameter(enc_init_cx, requires_grad=True)
-        # enc_init_cx.uniform_(-(1. / math.sqrt(hidden_dim)), 1. / math.sqrt(hidden_dim))
+        # enc_init_cx = nn.Parameter(enc_init_cx)
+        # enc_init_cx.uniform_(-(1. / math.sqrt(hidden_dim)),
+        #        1. / math.sqrt(hidden_dim))
         return enc_init_hx, enc_init_cx
 
 
@@ -85,8 +78,8 @@ class Attention(nn.Module):
         if self.use_tanh:
             logits = self.C * self.tanh(u)
         else:
-            logits = u  # [batch_size x sourceL]
-        return e, logits  # e is for glimpse,logits is before softmax
+            logits = u
+        return e, logits
 
 
 class Decoder(nn.Module):
@@ -119,16 +112,10 @@ class Decoder(nn.Module):
 
     def apply_mask_to_logits(self, logits, mask, prev_idxs):
         if mask is None:
-            mask = torch.zeros(logits.size()).byte()  # mask:[batch_size x sourceL]
-
-            choose_i = torch.LongTensor([0])  ##
-            mask.index_fill_(1, choose_i, 1)  ##
-            # mask[0, :] = 1
-
+            mask = torch.zeros(logits.size()).byte()  # dtype=torch.uint8
             if self.use_cuda:
                 mask = mask.cuda()
 
-        mask = mask.byte()
         maskk = mask.clone()
 
         # to prevent them from being reselected.
@@ -139,45 +126,19 @@ class Decoder(nn.Module):
             logits[maskk] = -np.inf
         return logits, maskk
 
-    def forward(self, decoder_input, embedded_inputs, hidden, context, batch_node_list, batch_ser_num_list):
+    def forward(self, decoder_input, embedded_inputs, hidden, context):
         """
         Args:
             decoder_input: The initial input to the decoder
                 size is [batch_size x embedding_dim]. Trainable parameter.
-            embedded_inputs: [sourceL x batch_size x embedding_dim] encoder's embedded_inputs
+            embedded_inputs: [sourceL x batch_size x embedding_dim]
             hidden: the prev hidden state, size is [batch_size x hidden_dim].
                 Initially this is set to (enc_h[-1], enc_c[-1])
             context: encoder outputs, [sourceL x batch_size x hidden_dim]
         """
 
-        def apply_graphmask_to_logits(logits, mask, prev_idxs, batch_node_list, batch_ser_num_list):
-
-            graphmask = mask.clone()  # [batch_size x sourceL]
-            graphlogits = logits.clone()  # [batch_size x sourceL]
-
-            list_set = list(range(graphmask.size(1)))
-
-            for i, (prev_idx, maskki, logitssi, node_list, ser_num_list) in enumerate(
-                    zip(prev_idxs, graphmask, graphlogits, batch_node_list, batch_ser_num_list)):
-                for node in node_list:
-                    if node.serial_number == prev_idx:
-
-                        list_copy = copy.deepcopy(list_set)
-                        for edge in node.edges:
-                            list_copy.remove(edge.to)
-                        for novisit in list_copy:
-                            graphmask[i][novisit] = 1
-                        # if 0 not in graphmask[i]:
-                        #     graphmask[i].fill_(0)
-
-                        if len(node.edges) == 0:
-                            graphmask[i].fill_(0)
-                        break
-
-            graphlogits[graphmask] = -np.inf
-            return graphlogits, graphmask
-
         def recurrence(x, hidden, logit_mask, prev_idxs):
+
             hx, cx = hidden  # batch_size x hidden_dim
             # gates: [batch_size x (hidden_dim x 4)]
             gates = self.input_weights(x) + self.hidden_weights(hx)
@@ -192,22 +153,15 @@ class Decoder(nn.Module):
             hy = outgate * torch.tanh(cy)  # batch_size x hidden_dim
 
             g_l = hy
-            '''
             for _ in range(self.n_glimpses):
-                ref, logits = self.glimpse(g_l, context)  # logits:[batch_size x sourceL]
+                ref, logits = self.glimpse(g_l, context)
                 logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
-                graphlogits, graphmask = apply_graphmask_to_logits(logits, logit_mask, prev_idxs, batch_node_list,
-                                                                   batch_ser_num_list)
                 # [batch_size x h_dim x sourceL] * [batch_size x sourceL x 1] = [batch_size x h_dim x 1]
-                # g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)
-                g_l = torch.bmm(ref, self.sm(graphlogits).unsqueeze(2)).squeeze(2)
-            '''
+                g_l = torch.bmm(ref, self.sm(logits).unsqueeze(2)).squeeze(2)
             _, logits = self.pointer(g_l, context)
 
             logits, logit_mask = self.apply_mask_to_logits(logits, logit_mask, prev_idxs)
-            graphlogits, graphmask = apply_graphmask_to_logits(logits, logit_mask, prev_idxs, batch_node_list,
-                                                               batch_ser_num_list)
-            probs = self.sm(graphlogits)
+            probs = self.sm(logits)
             return hy, cy, probs, logit_mask
 
         def topk(x, k):
@@ -219,30 +173,13 @@ class Decoder(nn.Module):
             return [x[e[0]] for e in a[-k:]]
 
         batch_size = context.size(1)
-        sourceL = context.size(0)
         outputs = []
         selections = []
-        # idxs = None
-        idxs = [0] * batch_size  #
-        selections.append(torch.Tensor(idxs).type(torch.int64))  #
-
-        choose_i = torch.LongTensor([0])
-        prob1 = torch.zeros(batch_size, sourceL)
-        prob1.index_fill_(1, choose_i, 1)
-        outputs.append(prob1)
-
+        idxs = None
         mask = None
-        if mask is None:  ##
-            mask = torch.zeros(batch_size, self.seq_len)  # dtype=torch.uint8,mask:[batch_size x sourceL]
-
-            choose_i = torch.LongTensor([0])  ##
-            mask.index_fill_(1, choose_i, 1)  ##
-
-            if self.use_cuda:
-                mask = mask.cuda()
 
         if self.decode_type == 'stochastic':
-            for _ in range(self.seq_len - 1):
+            for _ in range(self.seq_len):
                 hx, cx, probs, mask = recurrence(decoder_input, hidden, mask, idxs)
                 hidden = (hx, cx)
                 # select the next inputs for the decoder [batch_size x hidden_dim]
@@ -256,11 +193,10 @@ class Decoder(nn.Module):
         elif self.decode_type == 'beam_search':
             # embedded_inputs: [sourceL x batch_size x embedding_dim]
             # decoder_input: [batch_size x embedding_dim]
-            # context: [sourceL x batch_size x embedded_dim]
             # hidden: [batch_size x hidden_dim]
             # context: [sourceL x batch_size x hidden_dim]
             sel_cands = [[[list(), 0.0]] for _ in range(batch_size)]
-            for seq_id in range(self.seq_len - 1):
+            for seq_id in range(self.seq_len):
                 # probs: [batch_size x sourceL]
                 hx, cx, probs, mask = recurrence(decoder_input, hidden, mask, idxs)
                 hidden = (hx, cx)
@@ -298,6 +234,7 @@ class Decoder(nn.Module):
         """
         Return the next input for the decoder by selecting the
         input corresponding to the max output
+
         Args:
             probs: [batch_size x sourceL]
             embedded_inputs: [sourceL x batch_size x embedding_dim]
@@ -317,7 +254,7 @@ class Decoder(nn.Module):
             # compare new idxs elementwise with the previous idxs.
             # If any matches, then need to resample
             if old_idxs.eq(idxs).any():
-                # print('[!] resampling due to race condition')
+                print('[!] resampling due to race condition')
                 idxs = probs.multinomial(1).squeeze(1)
                 break
 
@@ -364,7 +301,7 @@ class PointerNetwork(nn.Module):
         self.decoder_in_0 = nn.Parameter(dec_in_0)
         self.decoder_in_0.data.uniform_(-1. / math.sqrt(embedding_dim), 1. / math.sqrt(embedding_dim))
 
-    def forward(self, inputs, batch_node_list, batch_ser_num_list):
+    def forward(self, inputs):
         """ Propagate inputs through the network
         Args:
             inputs: [sourceL x batch_size x embedding_dim]
@@ -381,13 +318,12 @@ class PointerNetwork(nn.Module):
         dec_init_state = (enc_h_t[-1], enc_c_t[-1])
 
         # repeat decoder_in_0 across batch
-        # decoder_input = self.decoder_in_0.unsqueeze(0).repeat(inputs.size(1), 1)  # [batch_size x embedding_dim]
-        decoder_input = inputs[0].clone().detach()  # [batch_size x embedding_dim]
+        decoder_input = self.decoder_in_0.unsqueeze(0).repeat(inputs.size(1), 1)  # [batch_size x embedding_dim]
 
         (pointer_probs, input_idxs), dec_hidden_t = self.decoder(decoder_input,
                                                                  inputs,
                                                                  dec_init_state,
-                                                                 enc_h, batch_node_list, batch_ser_num_list)
+                                                                 enc_h)
 
         return pointer_probs, input_idxs
 
@@ -452,7 +388,6 @@ class NeuralCombOptRL(nn.Module):
     """
 
     def __init__(self,
-                 input_dim,
                  embedding_dim,
                  hidden_dim,
                  seq_len,
@@ -466,7 +401,6 @@ class NeuralCombOptRL(nn.Module):
                  use_cuda):
         super(NeuralCombOptRL, self).__init__()
         self.objective_fn = objective_fn
-        self.input_dim = input_dim
         self.is_train = is_train
         self.use_cuda = use_cuda
 
@@ -486,39 +420,22 @@ class NeuralCombOptRL(nn.Module):
             hidden_dim,
             n_process_blocks,
             tanh_exploration,
-            False,  # use_tanh
+            False,
             use_cuda)
 
-        self.embedding = nn.Linear(input_dim, embedding_dim)
-
-    def forward(self, inputs, car, batch_graph, requests):
+    def forward(self, inputs, car, graphs, requests):
         """
         Args:
             inputs: [batch_size, sourceL, input_dim]
         """
-        batch_node_list = copy.deepcopy(batch_graph)  # 小图的节点列表
-        batch_ser_num_list = []  # mapping table
-
-        for node_list in batch_node_list:
-            ser_num_list = []
-            for node in node_list:
-                ser_num_list.append(node.serial_number)
-
-            for node in node_list:
-                node.serial_number = ser_num_list.index(node.serial_number)
-                for edge in node.edges:
-                    edge.to = ser_num_list.index(edge.to)
-            batch_ser_num_list.append(ser_num_list)
-
         batch_size = inputs.size(0)
 
         # [sourceL x batch_size x embedding_dim]
-        # embedded_inputs = self.embedding(inputs).permute(1, 0, 2)
         embedded_inputs = inputs.permute(1, 0, 2)
 
         # query the actor net for the input indices
         # making up the output, and the pointer attn
-        probs_, action_idxs = self.actor_net(embedded_inputs, batch_node_list, batch_ser_num_list)
+        probs_, action_idxs = self.actor_net(embedded_inputs)
         # probs_: [seq_len x batch_size x seq_len], action_idxs: [seq_len x batch_size]
 
         # Select the actions (inputs pointed to by the pointer net)
@@ -541,20 +458,13 @@ class NeuralCombOptRL(nn.Module):
         # [batch_size]
         v = self.critic_net(embedded_inputs)
 
-        # [batch_size]
-        # R = self.objective_fn(actions, self.use_cuda)
         action_idxs = torch.cat(action_idxs, 0).view(-1, batch_size).transpose(1, 0).tolist()
         C1 = 1e-4
         C2 = 1e-2
         C4 = 1e-1
         time_penalty = 120  # min
 
-        for i, ser_num_list in enumerate(batch_ser_num_list):
-            action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
-        #    for id in action_idxs[i]:
-        #        id = ser_num_list[id]
-
-        R = self.objective_fn(car, action_idxs, batch_graph, requests, C1, C2, C4, time_penalty)
-        # cars, tours, graphs, requests, C1, C2, C4, time_penalty
+        # [batch_size]
+        R = self.objective_fn(car, action_idxs, graphs, requests, C1, C2, C4, time_penalty)
 
         return R, v, probs, actions, action_idxs

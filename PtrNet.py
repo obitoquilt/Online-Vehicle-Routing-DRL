@@ -180,13 +180,13 @@ class Decoder(nn.Module):
         idxs = [0] * batch_size  #
         selections.append(torch.LongTensor(idxs))  #
         choose_i = torch.LongTensor([0])
-        prob1 = torch.zeros(batch_size, sourceL)
-        prob1.index_fill_(1, choose_i, 1)
-        outputs.append(prob1)
+        prob_0 = torch.zeros(batch_size, sourceL)
+        prob_0.index_fill_(1, choose_i, 1)
+        outputs.append(prob_0)
 
         mask = None
         if mask is None:
-            # dtype=torch.uint8,mask:[batch_size x sourceL]
+            # dtype=torch.uint8, mask:[batch_size x sourceL]
             mask = torch.zeros(batch_size, self.seq_len).byte()
 
             choose_i = torch.LongTensor([0])

@@ -14,11 +14,10 @@ from reward import reward_fn, OVRPDataset
 from tqdm import tqdm
 
 # parameters
-batch_size = 1
+batch_size = 10
 train_size = 128
 val_size = 1000
-input_dim = 128   # p dim
-embedding_dim = 128
+embedding_dim = 128  # p dim
 hidden_dim = 128
 n_process_blocks = 3
 n_glimpses = 1
@@ -52,15 +51,14 @@ training_dataset = OVRPDataset(num_samples=train_size,
                                high_bound=high_bound)
 tour_graph_set = training_dataset.get_tour_graph()
 request_set = training_dataset.get_request()
-car_set =training_dataset.get_car()
+car_set = training_dataset.get_car()
 
 # keep the original order
 training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
-seq_len = len(tour_graph_set[0])   # the number of nodes after the connecting points are removed
+seq_len = len(tour_graph_set[0])  # the number of nodes after the connecting points are removed
 # instantiate the Neural Combinatorial Opt with RL module
-model = NeuralCombOptRL(input_dim,
-                        embedding_dim,
+model = NeuralCombOptRL(embedding_dim,
                         hidden_dim,
                         seq_len,
                         n_glimpses,
@@ -112,9 +110,6 @@ for epoch in range(epochs):
 
         if use_cuda:
             sample_batch = sample_batch.cuda()
-            # graphs = torch.Tensor(graphs).cuda()
-            # requests = torch.Tensor(requests).cuda()
-            # car = torch.Tensor(car).cuda()
 
         R, v, probs, actions, actions_idxs = model(sample_batch, car, graphs, requests)
         advantage = R - v  # means L(π|s)-b(s)

@@ -63,7 +63,7 @@ class OVRPDataset(nn.Module):
 def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
     """
     :param time_penalty: the time penalty when car is out of energy
-    :param requests: a dic of request
+    :param requests: a dict of request
     :param cars: a list of car object
     :param tours: the set of solution of m vehicles
     :param graphs: a list of graph for each car

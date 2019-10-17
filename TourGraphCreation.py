@@ -36,18 +36,15 @@ def single_car_tour_graph(graph, requests):
 
     # re-create the graph for single car
     tour_graph = []
-    D = {'Start': ['Pick', 'Depot'],
-         'Pick': ['Pick', 'Delivery', 'Depot', 'Destination'],
-         'Delivery': ['Pick', 'Delivery', 'Depot', 'Destination'],
-         'Depot': ['Pick', 'Delivery', 'Depot', 'Destination'],
+    dest = ['Pick', 'Delivery', 'Depot', 'Destination']
+    D = {'Start': dest,
+         'Pick': dest,
+         'Delivery': dest,
+         'Depot': dest,
          'Destination': []}
     for i, node in enumerate(graph):
         if node.type.name in D.keys():
             if node.type.name == 'Pick':  # obtain information between pickup to delivery location
-                # for r in reqs:
-                #     if node.serial_number == r[0]:
-                #         node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][r[-1]]
-                #         break
                 node.type.distance = node.type.time = node.type.energy = dist[node.serial_number][reqs[node.serial_number]]
             node.edges = []
             for j, node_c in enumerate(graph):
@@ -69,7 +66,7 @@ def single_car_tour_graph(graph, requests):
 
 
 if __name__ == '__main__':
-    from GenetateBigGraph import generate_big_graph, generate_common_graph
+    from GenerateBigGraph import generate_big_graph, generate_common_graph
 
     common_graph = generate_common_graph(node_num=10, lower_bound=1, high_bound=100)
     graph, requests = generate_big_graph(common_graph, node_num=10, request_num=3, depot_num=1)

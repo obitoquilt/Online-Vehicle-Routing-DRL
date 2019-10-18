@@ -6,6 +6,7 @@
 
 import torch
 import os
+import copy
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
@@ -14,8 +15,8 @@ from reward import reward_fn, OVRPDataset
 from tqdm import tqdm
 
 # parameters
-batch_size = 10
-train_size = 128
+batch_size = 128
+train_size = 100000
 val_size = 1000
 embedding_dim = 128  # p dim
 hidden_dim = 128
@@ -98,7 +99,7 @@ if use_cuda:
     critic_mse = critic_mse.cuda()
 
 step = 0
-log_step = 50
+log_step = 10
 epochs = 100
 
 for epoch in range(epochs):
@@ -111,7 +112,7 @@ for epoch in range(epochs):
         if use_cuda:
             sample_batch = sample_batch.cuda()
 
-        R, v, probs, actions, actions_idxs = model(sample_batch, car, graphs, requests)
+        R, v, probs, actions, actions_idxs = model(sample_batch, copy.deepcopy(car), copy.deepcopy(graphs), copy.deepcopy(requests))
         advantage = R - v  # means L(π|s)-b(s)
         advantage = -advantage
 

@@ -482,21 +482,21 @@ class NeuralCombOptRL(nn.Module):
         time_penalty = 120  # min
 
         # [batch_size]
-        batch_node_list = graphs  # 小图的节点列表
-        batch_ser_num_list = []  # mapping table
+        # batch_node_list = graphs  # 小图的节点列表
+        # batch_ser_num_list = []  # mapping table
+        #
+        # for node_list in batch_node_list:
+        #     ser_num_list = []
+        #     for node in node_list:
+        #         ser_num_list.append(node.serial_number)
+        #
+        #     batch_ser_num_list.append(ser_num_list)
+        #
+        # for i, ser_num_list in enumerate(batch_ser_num_list):
+        #     action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
 
-        for node_list in batch_node_list:
-            ser_num_list = []
-            for node in node_list:
-                ser_num_list.append(node.serial_number)
-
-            batch_ser_num_list.append(ser_num_list)
-
-        for i, ser_num_list in enumerate(batch_ser_num_list):
-            action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
-
-        # for i, graph in enumerate(graphs):
-        #     action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
+        for i, graph in enumerate(graphs):
+            action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
         R = self.objective_fn(car, action_idxs, graphs, requests, C1, C2, C4, time_penalty)
 
         return R, v, probs, actions, action_idxs

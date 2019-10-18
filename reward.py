@@ -89,7 +89,7 @@ def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
             elif node.type.name == "Pick":
                 car.tour_time.append(cur_time)
                 request_num = node.type.request_num
-                if cur_time < node.type.pickup_deadline and requests[request_num].isload is False:
+                if cur_time <= node.type.pickup_deadline and requests[request_num].isload is False:
                     request = requests[request_num]
                     if car.capacity - car.used_capacity >= request.capacity_required:
                         car.load_request.append(request_num)
@@ -122,5 +122,11 @@ def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
             cur_time += road.time
         O += len(car.finished_request) - C1 * car.tour_len
         P += C2 * car.timeout + C4 * car.used_capacity
+
+        if len(car.finished_request) > 1:
+            print('tour:', tour)
+            for node in graph_temp:
+                print(node.serial_number, node.type.name)
+            print('finished_request', car.finished_request)
 
     return torch.FloatTensor([O - P])

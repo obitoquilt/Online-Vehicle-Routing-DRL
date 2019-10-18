@@ -120,7 +120,7 @@ def Struct2Vec(graph, p_dim=128, R=4):
 
 if __name__ == '__main__':
     import numpy as np
-    from GenetateBigGraph import generate_big_graph, generate_common_graph
+    from GenerateBigGraph import generate_big_graph, generate_common_graph
     from TourGraphCreation import single_car_tour_graph
 
     torch.set_printoptions(threshold=np.nan)  # show all data

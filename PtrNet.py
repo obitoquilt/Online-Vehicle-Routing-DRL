@@ -178,9 +178,9 @@ class Decoder(nn.Module):
         selections = []
         # idxs = None
         idxs = [0] * batch_size  #
-        selections.append(torch.LongTensor(idxs))  #
-        choose_i = torch.LongTensor([0])
-        prob_0 = torch.zeros(batch_size, sourceL)
+        selections.append(torch.LongTensor(idxs).cuda() if self.use_cuda else torch.LongTensor(idxs))   #
+        choose_i = torch.LongTensor([0]).cuda() if self.use_cuda else torch.LongTensor([0])
+        prob_0 = torch.zeros(batch_size, sourceL).cuda() if self.use_cuda else torch.zeros(batch_size, sourceL)
         prob_0.index_fill_(1, choose_i, 1)
         outputs.append(prob_0)
 
@@ -440,7 +440,8 @@ class NeuralCombOptRL(nn.Module):
             False,
             use_cuda)
 
-    def forward(self, inputs, car, graphs, requests):
+    # def forward(self, inputs, car, graphs, requests):
+    def forward(self, inputs):
         """
         Args:
             inputs: [batch_size, sourceL, input_dim]
@@ -476,9 +477,9 @@ class NeuralCombOptRL(nn.Module):
         v = self.critic_net(embedded_inputs)
 
         action_idxs = torch.cat(action_idxs, 0).view(-1, batch_size).transpose(1, 0).tolist()
-        C1 = 1e-4
-        C2 = 1e-2
-        C4 = 1e-1
+        C1 = 0
+        C2 = 0
+        C4 = 0
         time_penalty = 120  # min
 
         # [batch_size]
@@ -495,8 +496,9 @@ class NeuralCombOptRL(nn.Module):
         # for i, ser_num_list in enumerate(batch_ser_num_list):
         #     action_idxs[i] = [ser_num_list[j] for j in action_idxs[i]]
 
-        for i, graph in enumerate(graphs):
-            action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
-        R = self.objective_fn(car, action_idxs, graphs, requests, C1, C2, C4, time_penalty)
+        # for i, graph in enumerate(graphs):
+        #     action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
+        # R = self.objective_fn(car, action_idxs, graphs, requests, C1, C2, C4, time_penalty)
 
-        return R, v, probs, actions, action_idxs
+        # return R, v, probs, actions, action_idxs
+        return v, probs, actions, action_idxs

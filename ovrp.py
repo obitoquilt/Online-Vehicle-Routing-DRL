@@ -11,12 +11,12 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from PtrNet import NeuralCombOptRL
-from reward import reward_fn, OVRPDataset
+from reward import reward_fn, OVRPDataset, reward_fn_test
 from tqdm import tqdm
 
 # parameters
 batch_size = 128
-train_size = 100000
+train_size = 1000
 val_size = 1000
 embedding_dim = 128  # p dim
 hidden_dim = 128
@@ -25,22 +25,22 @@ n_glimpses = 1
 use_tanh = True
 C = 10  # tanh exploration
 n_epochs = 1
-use_cuda = False
+use_cuda = True
 is_train = True
 critic_beta = 0.9
 beam_size = 1  # if set B=1 then the technique is same as greedy search
-actor_net_lr = 1e-4
-critic_net_lr = 1e-4
+actor_net_lr = 1e-3   # modify
+critic_net_lr = 1e-3
 actor_lr_decay_step = 5000
 actor_lr_decay_rate = 0.96
 critic_lr_decay_step = 5000
 critic_lr_decay_rate = 0.96
 
-origin_node_num = 10  # the number of nodes in the original graph
+origin_node_num = 20  # the number of nodes in the original graph
 lower_bound = 1
 high_bound = 100
-request_num = 1
-depot_num = 1
+request_num = 3
+depot_num = 3
 
 load_path = ''
 
@@ -67,7 +67,7 @@ model = NeuralCombOptRL(embedding_dim,
                         C,
                         use_tanh,
                         beam_size,
-                        reward_fn,
+                        reward_fn_test,
                         is_train,
                         use_cuda)
 
@@ -109,10 +109,21 @@ for epoch in range(epochs):
         requests = request_set[batch_id * batch_size:(batch_id + 1) * batch_size]
         car = car_set[batch_id * batch_size:(batch_id + 1) * batch_size]
 
+        # Tours = []
+        # for g in graphs:
+        #     Tours.append([node.serial_number for node in g])
+        #
+        # reward_fn_test(car, Tours, graphs, requests, 0, 0, 0, 0)
+
         if use_cuda:
             sample_batch = sample_batch.cuda()
 
-        R, v, probs, actions, actions_idxs = model(sample_batch, copy.deepcopy(car), copy.deepcopy(graphs), copy.deepcopy(requests))
+        # R, v, probs, actions, actions_idxs = model(sample_batch, copy.deepcopy(car), copy.deepcopy(graphs), copy.deepcopy(requests))
+        v, probs, actions, action_idxs = model(sample_batch)
+        for i, graph in enumerate(graphs):
+            action_idxs[i] = [graph[j].serial_number for j in action_idxs[i]]
+        R = reward_fn_test(copy.deepcopy(car), action_idxs, copy.deepcopy(graphs), copy.deepcopy(requests), 0, 0, 0, 0)
+        R = R.cuda() if use_cuda else R
         advantage = R - v  # means L(π|s)-b(s)
         advantage = -advantage
 
@@ -145,4 +156,4 @@ for epoch in range(epochs):
         step += 1
 
         if step % log_step == 0:
-            print('epoch: {}, train_batch_id: {}, avg_reward: {}'.format(epoch, batch_id, R.mean().item()))
+            print('epoch: {}, train_batch_id: {}, avg_reward: {}'.format(epoch, batch_id, R.item() / batch_size))

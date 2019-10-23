@@ -31,7 +31,7 @@ def generate_big_graph(common_graph, node_num, request_num, depot_num):
     for depot in depots:
         R = random.randint(100, 200)
         common_graph[depot].type = Depot(R)
-    battery_size = random.randint(200, 300)
+    battery_size = random.randint(20000000, 30000000)
     initial_energy = random.uniform(0.2, 0.9) * battery_size
     capacity = random.randint(50, 100)
     common_graph[start].type = Start(battery_size, initial_energy, capacity)

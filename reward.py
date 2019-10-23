@@ -72,6 +72,7 @@ def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
     zipp = zip(Cars, Tours, Graphs, Requests)
     O = 0
     P = 0
+    rr = 0
     for z in zipp:
         car = z[0]
         tour = z[1]
@@ -120,13 +121,69 @@ def reward_fn(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
                 car.cur_energy -= road.energy
             car.tour_len += road.length
             cur_time += road.time
-        O += len(car.finished_request) - C1 * car.tour_len
+        O += len(car.finished_request)*1000 - C1 * car.tour_len
         P += C2 * car.timeout + C4 * car.used_capacity
+        rr += len(car.finished_request)
 
-        if len(car.finished_request) > 1:
-            print('tour:', tour)
-            for node in graph_temp:
-                print(node.serial_number, node.type.name)
-            print('finished_request', car.finished_request)
+    print('finished_request:{}'.format(rr))
+
+    return torch.FloatTensor([O - P])
+
+
+def reward_fn_test(Cars, Tours, Graphs, Requests, C1, C2, C4, time_penalty):
+    """
+    :param time_penalty: the time penalty when car is out of energy
+    :param requests: a dict of request
+    :param cars: a list of car object
+    :param tours: the set of solution of m vehicles
+    :param graphs: a list of graph for each car
+    :return:
+    """
+    zipp = zip(Cars, Tours, Graphs, Requests)
+    O = 0
+    P = 0
+    rr = 0
+    for z in zipp:
+        car = z[0]
+        tour = z[1]
+        graph_temp = z[2]
+        requests = z[3]
+        graph = {}
+        cur_time = 0
+        for node in graph_temp:
+            graph[node.serial_number] = node
+        for i in range(len(tour) - 1):
+            node_number = tour[i]
+            node = graph[node_number]
+            if node.type.name == "Start":
+                car.tour_time.append(cur_time)
+            elif node.type.name == "Pick":
+                car.tour_time.append(cur_time)
+                request_num = node.type.request_num
+                if requests[request_num].isload is False:
+                    request = requests[request_num]
+                    car.load_request.append(request_num)
+                    requests[request_num].isload = True
+            elif node.type.name == "Delivery":
+                car.tour_time.append(cur_time)
+                request_num = node.type.request_number
+                if request_num in car.load_request:
+                    car.finished_request.append(request_num)
+            elif node.type.name == "Depot":
+                car.tour_time.append(cur_time)
+            elif node.type.name == "Destination":
+                break
+            next_node_num = tour[i + 1]
+            for e in node.edges:
+                if e.to == next_node_num:
+                    road = e
+                    break
+            car.tour_len += road.length
+            cur_time += road.time
+        O += len(car.finished_request)*1000 - C1 * car.tour_len
+        P += C2 * car.timeout + C4 * car.used_capacity
+        rr += len(car.finished_request)
+
+    print('finished_request:{}'.format(rr))
 
     return torch.FloatTensor([O - P])

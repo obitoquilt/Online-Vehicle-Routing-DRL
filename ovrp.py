@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 # parameters
 batch_size = 128
-train_size = 1000
+train_size = 100
 val_size = 1000
 embedding_dim = 128  # p dim
 hidden_dim = 128
